@@ -20,9 +20,14 @@ To build: Download or *git clone* this repository and import into the [Android S
 ### Usage
 
 #### Steering the Snake
+
 * Hardware keys: Use directional pad or arrow keys to set direction.
 * Touch screen: Tap left third of the screen to turn left, right third to turn right.
+
 #### Audio
-* Use volume down/up hardware keys to mute/unmute.
+
+Use volume down/up hardware keys to mute/unmute.
+
 #### Pause
-* Press any other hardware key or tap the middle of the screen to pause.
+
+Press any other hardware key or tap the middle of the screen to pause.
