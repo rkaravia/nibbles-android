@@ -3,27 +3,27 @@ package nibbles.game;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SoundSequence {
+public class SoundSeq {
 	private static final int BASE_FREQ = 110;
 	private static final double HALF_NOTE = Math.pow(2, 1.0 / 12.0);
 	private static final int TUNE = 12;
 
-	private static final SoundSequenceElement[][] PREDEF = new SoundSequenceElement[][] {
-			new SoundSequenceElement[] { new Tempo(160), new Octave(2),
+	private static final SoundSeqElem[][] PREDEF = new SoundSeqElem[][] {
+			new SoundSeqElem[] { new Tempo(160), new Octave(2),
 					new NoteLength(20), new Notes("CDEDCD"),
 					new NoteLength(10), new Notes("ECC") },
-			new SoundSequenceElement[] { new Octave(1), new NoteLength(16),
+			new SoundSeqElem[] { new Octave(1), new NoteLength(16),
 					new Notes("CCCE") },
-			new SoundSequenceElement[] { new Octave(0), new NoteLength(32),
+			new SoundSeqElem[] { new Octave(0), new NoteLength(32),
 					new Notes("EFGEFDC") } };
 
 	public static final int START_ROUND = 0;
 	public static final int HIT_NUMBER = 1;
 	public static final int DEATH = 2;
-	
-	public static void init(NibblesSpeaker speaker) {
+
+	public static void init(Speaker speaker) {
 		for (int i = 0; i < PREDEF.length; i++) {
-			speaker.prepareSoundSeq(SoundSequence.convertSeq(PREDEF[i]));
+			speaker.prepareSoundSeq(SoundSeq.convertSeq(PREDEF[i]));
 		}
 	}
 
@@ -57,12 +57,12 @@ public class SoundSequence {
 		}
 	}
 
-	public static class FrequencyDuration {
-		private final double frequency;
+	public static class FreqDuration {
+		private final double freq;
 		private final int duration;
 
-		public FrequencyDuration(double frequency, int duration) {
-			this.frequency = frequency;
+		public FreqDuration(double freq, int duration) {
+			this.freq = freq;
 			this.duration = duration;
 		}
 
@@ -70,26 +70,25 @@ public class SoundSequence {
 			return duration;
 		}
 
-		public double getFrequency() {
-			return frequency;
+		public double getFreq() {
+			return freq;
 		}
 	}
 
-	public static List<FrequencyDuration> convertSeq(SoundSequenceElement[] seq) {
-		List<FrequencyDuration> result = new ArrayList<FrequencyDuration>();
+	public static List<FreqDuration> convertSeq(SoundSeqElem[] seq) {
+		List<FreqDuration> result = new ArrayList<FreqDuration>();
 		Params params = new Params();
-		for (SoundSequenceElement elem : seq) {
+		for (SoundSeqElem elem : seq) {
 			elem.execute(params, result);
 		}
 		return result;
 	}
 
-	abstract private static class SoundSequenceElement {
-		abstract public void execute(Params params,
-				List<FrequencyDuration> result);
+	abstract private static class SoundSeqElem {
+		abstract public void execute(Params params, List<FreqDuration> result);
 	}
 
-	private static class NoteLength extends SoundSequenceElement {
+	private static class NoteLength extends SoundSeqElem {
 		private final int length;
 
 		public NoteLength(int length) {
@@ -97,12 +96,12 @@ public class SoundSequence {
 		}
 
 		@Override
-		public void execute(Params params, List<FrequencyDuration> result) {
+		public void execute(Params params, List<FreqDuration> result) {
 			params.setLength(length);
 		}
 	}
 
-	private static class Octave extends SoundSequenceElement {
+	private static class Octave extends SoundSeqElem {
 		private final int octave;
 
 		public Octave(int octave) {
@@ -110,12 +109,12 @@ public class SoundSequence {
 		}
 
 		@Override
-		public void execute(Params params, List<FrequencyDuration> result) {
+		public void execute(Params params, List<FreqDuration> result) {
 			params.setOctave(octave);
 		}
 	}
 
-	private static class Tempo extends SoundSequenceElement {
+	private static class Tempo extends SoundSeqElem {
 		private final int tempo;
 
 		public Tempo(int tempo) {
@@ -123,12 +122,12 @@ public class SoundSequence {
 		}
 
 		@Override
-		public void execute(Params params, List<FrequencyDuration> result) {
+		public void execute(Params params, List<FreqDuration> result) {
 			params.setTempo(tempo);
 		}
 	}
 
-	private static class Notes extends SoundSequenceElement {
+	private static class Notes extends SoundSeqElem {
 		private final String notes;
 
 		public Notes(String notes) {
@@ -136,7 +135,7 @@ public class SoundSequence {
 		}
 
 		@Override
-		public void execute(Params params, List<FrequencyDuration> result) {
+		public void execute(Params params, List<FreqDuration> result) {
 			int duration = 240 * 1000 / (params.getTempo() * params.getLength());
 			for (int i = 0; i < notes.length(); i++) {
 				int note = 0;
@@ -173,10 +172,11 @@ public class SoundSequence {
 						i++;
 					}
 				}
-				int noteId = (note - 9) + halfTone + 12 * (params.getOctave()) + TUNE;
+				int noteId = (note - 9) + halfTone + 12 * (params.getOctave())
+						+ TUNE;
 				double frequency = BASE_FREQ * Math.pow(HALF_NOTE, noteId);
 
-				result.add(new FrequencyDuration(frequency, duration));
+				result.add(new FreqDuration(frequency, duration));
 			}
 		}
 	}

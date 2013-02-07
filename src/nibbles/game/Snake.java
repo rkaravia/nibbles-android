@@ -1,60 +1,50 @@
 package nibbles.game;
 
-/*
- *	Author:      Roman Zoller
- *	Date:        20.03.2008
- */
-
+import java.io.Serializable;
 import java.util.*;
 
-public class Snake {
-	public static final int N_LIVES_START = 5;
-	public static final int SCOREMULTIPLIER = 100;
-	public static final int DEATHDEDUCTION = 10;
+public class Snake implements Serializable {
+	private static final long serialVersionUID = 1L;
 
-	public static final SnakeData[] PREDEF = new SnakeData[] {
+	public static final int INIT_N_LIVES = 5;
+	public static final int SCORE_MULTIPLIER = 100;
+	public static final int DEATH_DEDUCTION = 10;
+
+	public static final SnakeData[] SNAKE_DATA = new SnakeData[] {
 			new SnakeData("SAMMY", "%1$s-->  Lives: %2$1d     %3$9d",
-					new Vector2D(48, 0)),
-			new SnakeData("JAKE", "%3$9d  Lives: %2$1d  <--%1$s", new Vector2D(
-					0, 0)) };
+					new Point(48, 0)),
+			new SnakeData("JAKE", "%3$9d  Lives: %2$1d  <--%1$s", new Point(0,
+					0)) };
 
-	// public static final String[] NAMES = new String[] { "SAMMY", "JAKE" };
-	// public static final String[] FORMAT_STRINGS = new String[] {
-	// "%1$s-->  Lives: %2$1d     %3$9d", "%3$9d  Lives: %2$1d  <--%1$s" };
-	// public static final Vector2D[] INFO_OUTPUT_LOCATIONS = new Vector2D[] {
-	// new Vector2D(48, 0), new Vector2D(0, 0), };
-
-	private int nLives = N_LIVES_START;
+	private int nLives = INIT_N_LIVES;
 	private int score = 0;
 
 	private byte snakeColor;
 	private byte backgroundColor;
 	private Arena arena;
 
-	private Vector<Vector2D> body;
+	private LinkedList<Point> body;
 	private int targetLength;
 
-	private Vector2D headPosition;
+	private Point headPosition;
 
-	private boolean validState = false;
-	private final SnakeData snakeData;
-	
+	private final int id;
+
 	private final DirectionBuffer directionBuffer = new DirectionBuffer();
 
-	public Snake(byte snakeColor, byte backgroundColor, Arena arena,
-			SnakeData snakeData) {
+	public Snake(byte snakeColor, byte backgroundColor, Arena arena, int id) {
 		this.snakeColor = snakeColor;
 		this.backgroundColor = backgroundColor;
 		this.arena = arena;
-		this.snakeData = snakeData;
+		this.id = id;
 	}
 
 	private static class SnakeData {
 		private final String name;
 		private final String format;
-		private final Vector2D infoLocation;
+		private final Point infoLocation;
 
-		public SnakeData(String name, String format, Vector2D infoLocation) {
+		public SnakeData(String name, String format, Point infoLocation) {
 			this.name = name;
 			this.format = format;
 			this.infoLocation = infoLocation;
@@ -68,112 +58,103 @@ public class Snake {
 			return format;
 		}
 
-		public Vector2D getInfoLocation() {
+		public Point getInfoLocation() {
 			return infoLocation;
 		}
 	}
-	
-	private static class DirectionBuffer {
-		private final LinkedList<Vector2D> directions = new LinkedList<Vector2D>();
-		
-		private synchronized void update() {
-			if (directions.size() > 1) {
-				directions.removeFirst();
-			}
-		}
-		
-		private synchronized void add(Vector2D direction) {
-			if (directions.isEmpty() || !direction.getAbsValues().equals(
-					directions.getLast().getAbsValues())) {
-				directions.add(direction);
-			}
-		}
-		
-		private synchronized void init(Vector2D direction) {
-			directions.clear();
-			directions.add(direction);
-		}
-		
-		private synchronized void reset() {
+
+	public static class DirectionBuffer implements Serializable {
+		private static final long serialVersionUID = 1L;
+
+		private final LinkedList<Point> buffer = new LinkedList<Point>();
+
+		public synchronized void reset() {
 			init(get());
 		}
-		
-		private synchronized Vector2D get() {
-			return directions.getFirst();
+
+		public synchronized void turnLeft() {
+			if (!buffer.isEmpty()) {
+				buffer.add(buffer.getLast().rotateLeft());
+			}
 		}
 
-		private synchronized void turnLeft() {
-			if (!directions.isEmpty()) {
-				directions.add(directions.getLast().rotateLeft());
+		public synchronized void turnRight() {
+			if (!buffer.isEmpty()) {
+				buffer.add(buffer.getLast().rotateRight());
 			}
 		}
-		
-		private synchronized void turnRight() {
-			if (!directions.isEmpty()) {
-				directions.add(directions.getLast().rotateRight());
+
+		private synchronized void init(Point direction) {
+			buffer.clear();
+			buffer.add(direction);
+		}
+
+		private synchronized void update() {
+			if (buffer.size() > 1) {
+				buffer.removeFirst();
 			}
+		}
+
+		private synchronized void add(Point direction) {
+			if (buffer.isEmpty()
+					|| !direction.absValues().equals(
+							buffer.getLast().absValues())) {
+				buffer.add(direction);
+			}
+		}
+
+		private synchronized Point get() {
+			return buffer.getFirst();
 		}
 	}
 
-	public void createSnakeBody(Vector2D initialHeadPosition,
-			Vector2D direction) {
-//		directions = new LinkedList<Vector2D>();
-//		directions.add(direction);
+	public void init(Point initialHeadPosition, Point direction) {
 		directionBuffer.init(direction);
 		targetLength = 2;
-		body = new Vector<Vector2D>();
+		body = new LinkedList<Point>();
 
-		Vector2D initialTailPosition = initialHeadPosition.subtract(direction);
-		addPixel(initialTailPosition);
-		addPixel(initialHeadPosition);
-		validState = true;
+		Point initialTailPosition = initialHeadPosition.subtract(direction);
+		addBodyPart(initialTailPosition);
+		addBodyPart(initialHeadPosition);
 	}
 
-	public synchronized void step() {
-//		if (directions.size() > 1) {
-//			directions.removeFirst();
-//		}
+	public synchronized void prepareStep() {
 		directionBuffer.update();
-		headPosition = ((Vector2D) body.lastElement()).add(directionBuffer.get());
+		headPosition = body.getLast().add(directionBuffer.get());
 	}
 
-	public boolean draw(Snake[] snakes) {
-		if (checkForCollision(snakes)) {
+	public boolean step(Snake[] snakes) {
+		if (doesCollide(snakes)) {
 			nLives--;
-			score -= DEATHDEDUCTION;
+			score -= DEATH_DEDUCTION;
 			return false;
 		} else {
-			addPixel(headPosition);
+			addBodyPart(headPosition);
 			if (body.size() > targetLength) {
-				removePixel();
+				removeBodyPart();
 			}
 			return true;
 		}
 	}
 
-	public Vector2D getHeadPosition() {
+	public Point getHeadPosition() {
 		return headPosition;
 	}
 
-	public void addDirection(Vector2D direction) {
-//		if (!direction.getAbsValues().equals(
-//				directions.getLast().getAbsValues())) {
-//			directions.add(direction);
-//		}
+	public void addDirection(Point direction) {
 		directionBuffer.add(direction);
 	}
 
-	private void addPixel(Vector2D position) {
+	private void addBodyPart(Point position) {
 		arena.setContent(position, snakeColor);
-		body.addElement(position);
+		body.add(position);
 	}
 
-	private void removePixel() {
-		arena.setContent((Vector2D) body.firstElement(), backgroundColor);
-		body.removeElementAt(0);
+	private void removeBodyPart() {
+		arena.setContent(body.removeFirst(), backgroundColor);
 	}
 
-	private boolean checkForCollision(Snake[] snakes) {
+	private boolean doesCollide(Snake[] snakes) {
 		boolean headCollision = false;
 		for (int i = 0; i < snakes.length; i++) {
 			if (snakes[i] != this
@@ -182,12 +163,12 @@ public class Snake {
 			}
 		}
 
-		return (headCollision || arena.getContent(headPosition) != backgroundColor);
+		return (headCollision || !arena.isEmpty(headPosition));
 	}
 
-	public boolean checkForFood(Vector2D p1, int foodNumber) {
-		Vector2D p2 = Arena.getSisterPoint(p1);
-		boolean result = headPosition.equals(p1) || headPosition.equals(p2);
+	public boolean doesEat(Point p, int foodNumber) {
+		Point sibling = Arena.getSiblingPoint(p);
+		boolean result = headPosition.equals(p) || headPosition.equals(sibling);
 		if (result) {
 			score += foodNumber;
 			targetLength += 4 * foodNumber;
@@ -199,33 +180,20 @@ public class Snake {
 		return nLives;
 	}
 
-	public void output(NibblesScreen screen, int textColor) {
-		for (Vector2D bodyPart : body) {
-			screen.update(bodyPart, arena.getColor(bodyPart));
-			Vector2D sisterPoint = Arena.getSisterPoint(bodyPart);
-			screen.update(sisterPoint, arena.getColor(sisterPoint));
+	public void draw(Screen screen, int textColor) {
+		for (Point bodyPart : body) {
+			screen.draw(bodyPart, arena.getColor(bodyPart));
+			Point sisterPoint = Arena.getSiblingPoint(bodyPart);
+			screen.draw(sisterPoint, arena.getColor(sisterPoint));
 		}
 
-		String info = String.format(snakeData.getFormat(), snakeData.getName(),
-				nLives, score * 100);
-		Vector2D infoLocation = snakeData.getInfoLocation();
+		String info = String.format(SNAKE_DATA[id].getFormat(),
+				SNAKE_DATA[id].getName(), nLives, score * 100);
+		Point infoLocation = SNAKE_DATA[id].getInfoLocation();
 		screen.write(info, infoLocation, textColor);
 	}
 
-	public void turnLeft() {
-		directionBuffer.turnLeft();
-//		directions.add(directions.getLast().rotateLeft());
-	}
-
-	public void turnRight() {
-		directionBuffer.turnRight();
-//		directions.add(directions.getLast().rotateRight());
-	}
-
-	public void clearDirectionBuffer() {
-//		Vector2D direction = directions.getFirst();
-//		directions.clear();
-//		directions.add(direction);
-		directionBuffer.reset();
+	public DirectionBuffer getDirectionBuffer() {
+		return directionBuffer;
 	}
 }

@@ -1,58 +1,59 @@
 package nibbles.ui;
 
 import android.content.Context;
+import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 public class NibblesView extends SurfaceView implements SurfaceHolder.Callback {
-//	private static final String TAG = "SView";
+	private final NibblesThread thread;
 
-	private NibblesThread thread;
-	
-    public NibblesView(Context context) {
-        super(context);
+	public NibblesView(Context context, Bundle savedInstanceState) {
+		super(context);
+		SurfaceHolder holder = getHolder();
+		holder.addCallback(this);
+		thread = new NibblesThread(holder, getContext(), savedInstanceState);
+	}
 
-        SurfaceHolder holder = getHolder();
-        holder.addCallback(this);
+	public void doTouch(MotionEvent event) {
+		if (event.getAction() == MotionEvent.ACTION_DOWN) {
+			thread.doTouch(event.getX() / getWidth());
+		}
+	}
 
-        thread = new NibblesThread(holder, context);
-    }
-    
-    public void doTouch (float x) {
-    	thread.doTouch(x / getWidth());
-    }
+	@Override
+	public void onWindowFocusChanged(boolean hasWindowFocus) {
+	}
 
-    @Override
-    public void onWindowFocusChanged(boolean hasWindowFocus) {
-        //if (!hasWindowFocus) thread.pause();
-    }
-
-    @Override
+	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width,
-            int height) {
-        //thread.setSurfaceSize(width, height);
-    }
+			int height) {
+	}
 
-    @Override
+	@Override
 	public void surfaceCreated(SurfaceHolder holder) {
-        thread.setRunning(true);
-        thread.start();
-    }
+		synchronized (thread) {
+			thread.setRunning(true);
+			if (!thread.isAlive()) {
+				thread.start();
+			}
+			thread.notify();
+		}
+	}
 
-    @Override
+	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
-        boolean retry = true;
-        thread.setRunning(false);
-        while (retry) {
-            try {
-                thread.join();
-                retry = false;
-            } catch (InterruptedException e) {
-            }
-        }
-    }
+		synchronized (thread) {
+			thread.setRunning(false);
+			try {
+				thread.wait();
+			} catch (InterruptedException e) {
+			}
+		}
+	}
 
-	public void doKeyDown(int keyCode) {
-		thread.doKeyDown(keyCode);
+	public NibblesThread getThread() {
+		return thread;
 	}
 }

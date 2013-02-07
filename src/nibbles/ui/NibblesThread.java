@@ -5,43 +5,62 @@ import java.util.List;
 
 import nibbles.ui.R;
 
-import nibbles.game.NibblesGame;
-import nibbles.game.NibblesScreen;
-import nibbles.game.NibblesSpeaker;
-import nibbles.game.SoundSequence.FrequencyDuration;
+import nibbles.game.Game;
+import nibbles.game.Screen;
+import nibbles.game.Speaker;
+import nibbles.game.SoundSeq.FreqDuration;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 
 public class NibblesThread extends Thread {
+	private static final String KEY_NIBBLES_GAME = "NibblesGame";
+	private static final String KEY_MUTED = "Muted";
+
 	private boolean running = false;
 	private final SurfaceHolder surfaceHolder;
-	private NibblesGame nibblesGame;
-//	private static final String TAG = "NT";
-	private AsciiWriter asciiWriter;
+	private Game nibblesGame;
+	private static final String TAG = "NT";
+	private AsciiCharWriter asciiWriter;
 	private final Context context;
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
-	
-	private final NibblesSpeaker speaker = new NibblesSpeaker() {
+
+	private final Speaker speaker = new Speaker() {
+		private boolean muted = false;
+		
 		@Override
-		public void playSoundSeq(int id) {
-			playSeqPool.get(id).play();
+		public void outputSoundSeq(int id) {
+			if (!muted) {
+				playSeqPool.get(id).play();
+			}
 		}
 
 		@Override
-		public int prepareSoundSeq(List<FrequencyDuration> seq) {
+		public int prepareSoundSeq(List<FreqDuration> seq) {
 			playSeqPool.add(new PlaySeq(seq));
 			return playSeqPool.size() - 1;
 		}
 	};
 
-	public NibblesThread(SurfaceHolder surfaceHolder, Context context) {
+	public NibblesThread(SurfaceHolder surfaceHolder, Context context,
+			Bundle savedInstanceState) {
 		this.surfaceHolder = surfaceHolder;
 		this.context = context;
-		nibblesGame = new NibblesGame(1, 20, false, speaker);
+		if (savedInstanceState == null) {
+			nibblesGame = new Game(1, 20, false);
+		} else {
+			Log.v(TAG, "Restore");
+			nibblesGame = (Game) savedInstanceState
+					.getSerializable(KEY_NIBBLES_GAME);
+			speaker.setMuted(savedInstanceState.getBoolean(KEY_MUTED));
+		}
+		nibblesGame.initSpeaker(speaker);
 	}
 
 	private void doDraw(final Canvas canvas) {
@@ -52,54 +71,68 @@ public class NibblesThread extends Thread {
 		}
 		int usedWidth;
 		int usedHeight;
-		if (w / (float) canvas.getHeight() > NibblesScreen.ASPECTRATIO) {
-			usedWidth = (int) (h * NibblesScreen.ASPECTRATIO);
+		if (w / (float) canvas.getHeight() > Screen.ASPECT_RATIO) {
+			usedWidth = (int) (h * Screen.ASPECT_RATIO);
 			usedHeight = h;
 		} else {
 			usedWidth = w;
-			usedHeight = (int) (w / NibblesScreen.ASPECTRATIO);
+			usedHeight = (int) (w / Screen.ASPECT_RATIO);
 		}
 		canvas.translate((w - usedWidth) / 2, (h - usedHeight) / 2);
-		canvas.scale(usedWidth / (float) NibblesScreen.WIDTH, usedHeight
-				/ (float) NibblesScreen.HEIGHT);
-		NibblesScreen screen = new NibblesScreen() {
+		canvas.scale(usedWidth / (float) Screen.WIDTH, usedHeight
+				/ (float) Screen.HEIGHT);
+		Screen screen = new Screen() {
 			@Override
-			protected void drawRect(int left, int top, int right, int bottom, int color) {
+			protected void drawRect(int left, int top, int right, int bottom,
+					int color) {
 				Paint p = new Paint();
 				p.setColor(color);
 				canvas.drawRect(left, top, right, bottom, p);
 			}
-			
+
 			@Override
 			protected void writeChar(char c, int x, int y, int color) {
 				asciiWriter.write(canvas, c, x, y, color);
 			}
 		};
-		nibblesGame.output(screen);
-//		asciiWriter.write(canvas, "SAMMY DIES!!!", 128, 128, Color.WHITE);
+		nibblesGame.draw(screen);
 	}
-	
+
 	private void initAsciiWriter(int w, int h) {
-		Bitmap charset = BitmapFactory.decodeResource(context.getResources(), R.drawable.charset);
-		float scaleX = w / (float) NibblesScreen.WIDTH;
-		float scaleY = h / (float) NibblesScreen.HEIGHT;
-		asciiWriter = new AsciiWriter(charset, 8, 16, scaleX, scaleY);
+		Bitmap charset = BitmapFactory.decodeResource(context.getResources(),
+				R.drawable.charset);
+		float scaleX = w / (float) Screen.WIDTH;
+		float scaleY = h / (float) Screen.HEIGHT;
+		asciiWriter = new AsciiCharWriter(charset, 8, 16, scaleX, scaleY);
 	}
 
 	@Override
 	public void run() {
-		while (running) {
-			Canvas c = null;
-			try {
-				c = this.surfaceHolder.lockCanvas();
-				synchronized (surfaceHolder) {
-					nibblesGame.step();
-					doDraw(c);
+		while (true) {
+			synchronized (this) {
+				try {
+					if (!running) {
+						wait();
+					}
+				} catch (InterruptedException e) {
 				}
-			} finally {
-				if (c != null) {
-					surfaceHolder.unlockCanvasAndPost(c);
+			}
+			while (running) {
+				Canvas c = null;
+				try {
+					c = surfaceHolder.lockCanvas();
+					synchronized (surfaceHolder) {
+						nibblesGame.step();
+						doDraw(c);
+					}
+				} finally {
+					if (c != null) {
+						surfaceHolder.unlockCanvasAndPost(c);
+					}
 				}
+			}
+			synchronized (this) {
+				notify();
 			}
 		}
 	}
@@ -110,11 +143,11 @@ public class NibblesThread extends Thread {
 
 	public void doTouch(float x) {
 		if (x >= 2.0 / 3.0) {
-			nibblesGame.turnRight();
+			nibblesGame.turnRight(0);
 		} else if (x >= 1.0 / 3.0) {
 			nibblesGame.toggleState();
 		} else {
-			nibblesGame.turnLeft();
+			nibblesGame.turnLeft(0);
 		}
 	}
 
@@ -125,7 +158,30 @@ public class NibblesThread extends Thread {
 			nibblesGame.addDirection(snakeEvent.getSnakeId(),
 					snakeEvent.getDirection());
 		} else {
-			nibblesGame.toggleState();
+			switch (keyCode) {
+			case KeyEvent.KEYCODE_VOLUME_DOWN:
+				speaker.setMuted(true);
+				break;
+			case KeyEvent.KEYCODE_VOLUME_UP:
+				speaker.setMuted(false);
+				break;
+			case KeyEvent.KEYCODE_MUTE:
+				speaker.setMuted(!speaker.isMuted());
+				break;
+			default:
+				nibblesGame.toggleState();
+				break;
+			}
 		}
+	}
+
+	public void doPause() {
+		nibblesGame.pause();
+	}
+
+	public void saveState(Bundle outState) {
+		Log.v(TAG, "Save");
+		outState.putSerializable(KEY_NIBBLES_GAME, nibblesGame);
+		outState.putBoolean(KEY_MUTED, speaker.isMuted());
 	}
 }

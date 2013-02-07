@@ -1,99 +1,111 @@
 package nibbles.game;
 
-public class Arena {
+import java.io.Serializable;
+
+import nibbles.game.Colors.ColorKey;
+
+public class Arena implements Serializable {
+	private static final long serialVersionUID = 1L;
+
 	public static final int WIDTH = 80;
 	public static final int HEIGHT = 50;
-	public static final Wall[] borderWalls = {
-			new Wall(new Vector2D(0, 2), WIDTH, Vector2D.RIGHT),
-			new Wall(new Vector2D(WIDTH - 1, 2), HEIGHT - 2, Vector2D.DOWN),
-			new Wall(new Vector2D(WIDTH - 1, HEIGHT - 1), WIDTH, Vector2D.LEFT),
-			new Wall(new Vector2D(0, HEIGHT - 1), HEIGHT - 2, Vector2D.UP),
-	};
-	
+	public static final Wall[] BORDER_WALLS = {
+			new Wall(new Point(0, 2), WIDTH, Point.RIGHT),
+			new Wall(new Point(WIDTH - 1, 2), HEIGHT - 2, Point.DOWN),
+			new Wall(new Point(WIDTH - 1, HEIGHT - 1), WIDTH, Point.LEFT),
+			new Wall(new Point(0, HEIGHT - 1), HEIGHT - 2, Point.UP), };
+
 	private byte[][] arena;
 	private long[][] timeDrawn;
 	private final Colors colorTable;
 	private final LogicTimer logicTimer;
-	private Level level;
-	
-	public Arena(Colors colorTable, LogicTimer logicTimer){
+	private int levelId;
+
+	public Arena(Colors colorTable, LogicTimer logicTimer) {
 		arena = new byte[WIDTH][HEIGHT];
 		timeDrawn = new long[WIDTH][HEIGHT];
 		this.colorTable = colorTable;
 		this.logicTimer = logicTimer;
 	}
-	
-	public void setLevel(Level level){
-		this.level = level;
-		
-		//reset whole arena to background color
-		for(int y = 0; y < HEIGHT; y++){
-			for(int x = 0; x < WIDTH; x++){
-				setContent(x, y, colorTable.getBackground());
+
+	public void setLevel(int levelId) {
+		this.levelId = levelId;
+
+		// reset whole arena to background color
+		for (int y = 0; y < HEIGHT; y++) {
+			for (int x = 0; x < WIDTH; x++) {
+				setContent(x, y, colorTable.get(ColorKey.BG));
 			}
 		}
-		
-		//draw border walls
-		for(int i = 0; i < borderWalls.length; i++){
-			borderWalls[i].draw(this, colorTable.getWalls());
+
+		// draw border walls
+		for (int i = 0; i < BORDER_WALLS.length; i++) {
+			BORDER_WALLS[i].draw(this, colorTable.get(ColorKey.WALL));
 		}
-		
-		//draw level
-		level.draw(this, colorTable.getWalls());
+
+		// draw level
+		Level.get(levelId).draw(this, colorTable.get(ColorKey.WALL));
 	}
-	
-	private void setContent(int x, int y, byte color){
+
+	private void setContent(int x, int y, byte color) {
 		arena[x][y] = color;
 		timeDrawn[x][y] = logicTimer.getLogicTime();
 	}
-	
-	public void setContent(Vector2D point, byte color){
+
+	public void setContent(Point point, byte color) {
 		setContent(point.getX(), point.getY(), color);
 	}
-	
-	public boolean placeFood(Vector2D point){
-		Vector2D sister = getSisterPoint(point);
-		return (getContent(point) == colorTable.getBackground() && getContent(sister) == colorTable.getBackground());
-	}
-	
-	public int getContent(Vector2D point){
-		return arena[point.getX()][point.getY()];
-	}
-	
-	public int getColor(Vector2D point){
-		int x = point.getX();
-		int y = point.getY();
 
-		byte qbColor = arena[x][y];
+	public boolean placeFood(Point point) {
+		Point sibling = getSiblingPoint(point);
+		return (getContent(point) == colorTable.get(ColorKey.BG) && getContent(sibling) == colorTable
+				.get(ColorKey.BG));
+	}
 
-		//get original nibbles wall-darkening effect:
-		if(qbColor > 7){
-			int sisterY = getSisterY(y);
-			if(arena[x][sisterY] > 7 && arena[x][sisterY] != qbColor && timeDrawn[x][sisterY] > timeDrawn[x][y]){
-				qbColor -= 8;
+	private byte getContent(Point p) {
+		return arena[p.getX()][p.getY()];
+	}
+
+	public boolean isEmpty(Point p) {
+		return getContent(p) == colorTable.get(ColorKey.BG);
+	}
+
+	private long getTimeDrawn(Point p) {
+		return timeDrawn[p.getX()][p.getY()];
+	}
+
+	public int getColor(Point p) {
+		byte result = getContent(p);
+
+		// get original nibbles wall-darkening effect:
+		if (result > 7) {
+			Point sibling = getSiblingPoint(p);
+			byte siblingColor = getContent(sibling);
+			if (siblingColor > 7 && siblingColor != result
+					&& getTimeDrawn(sibling) > getTimeDrawn(p)) {
+				result -= 8;
 			}
 		}
 
-		return qbColor;
+		return result;
 	}
-	
-	public static Vector2D getSisterPoint(Vector2D point){
-		return new Vector2D(point.getX(), getSisterY(point.getY()));
+
+	public static Point getSiblingPoint(Point p) {
+		int y = p.getY();
+		y = y - (y % 2) * 2 + 1;
+		return new Point(p.getX(), y);
 	}
-	
-	private static int getSisterY(int y){
-		return y - (y % 2) * 2 + 1;
-	}
-	
-	public void output(NibblesScreen screen) {
-		screen.update(new Vector2D(0, 0), new Vector2D(WIDTH-1, HEIGHT-1), colorTable.getBackground());
-		
-		//draw border walls
-		for(int i = 0; i < borderWalls.length; i++){
-			borderWalls[i].output(screen, colorTable.getWalls());
+
+	public void draw(Screen screen) {
+		screen.draw(new Point(0, 0), new Point(WIDTH - 1, HEIGHT - 1),
+				colorTable.get(ColorKey.BG));
+
+		// draw border walls
+		for (int i = 0; i < BORDER_WALLS.length; i++) {
+			BORDER_WALLS[i].output(screen, colorTable.get(ColorKey.WALL));
 		}
-		
-		//draw level
-		level.output(screen, colorTable.getWalls());
+
+		// draw level
+		Level.get(levelId).output(screen, colorTable.get(ColorKey.WALL));
 	}
 }

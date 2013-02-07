@@ -2,41 +2,49 @@ package nibbles.ui;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 
 public class NibblesActivity extends Activity {
-	private static final String TAG = "FA";
-	
 	private NibblesView nibblesView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		// enable fullscreen mode
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		nibblesView = new NibblesView(this);
+		// create view
+		nibblesView = new NibblesView(this, savedInstanceState);
 		setContentView(nibblesView);
+	}
 
-		Log.v(TAG, "INIT");
+	@Override
+	protected void onPause() {
+		super.onPause();
+		nibblesView.getThread().doPause();
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		nibblesView.getThread().saveState(outState);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		nibblesView.doKeyDown(keyCode);
+		nibblesView.getThread().doKeyDown(keyCode);
 		return true;
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if (event.getAction() == MotionEvent.ACTION_DOWN) {
-			nibblesView.doTouch(event.getX());
-		}
+		nibblesView.doTouch(event);
 		return true;
 	}
 }

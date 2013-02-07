@@ -1,6 +1,10 @@
 package nibbles.game;
 
-public class LogicTimer {
+import java.io.Serializable;
+
+public class LogicTimer implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	private final long beatLength;
 	private long startTime;
 	private long logicTime;

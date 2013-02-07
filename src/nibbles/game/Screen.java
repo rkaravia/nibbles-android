@@ -2,15 +2,15 @@ package nibbles.game;
 
 import android.graphics.Color;
 
-abstract public class NibblesScreen {
+abstract public class Screen {
 	public static final int WIDTH = 640;
 	public static final int HEIGHT = 400;
-	public static final double ASPECTRATIO = 4.0 / 3.0;
+	public static final double ASPECT_RATIO = 4.0 / 3.0;
 
-	private static final int DOSCHARWIDTH = 8;
-	private static final int DOSCHARHEIGHT = 16;
-	private static final int UPPERPIXELHEIGHT = 7;
-//	private static final int LOWERPIXELHEIGHT = 9;
+	private static final int CHAR_WIDTH = 8;
+	private static final int CHAR_HEIGHT = 16;
+	private static final int UPPER_PART_HEIGHT = 7;
+	// private static final int LOWERPIXELHEIGHT = 9;
 
 	private static final int[] QB_COLORS = { Color.rgb(0, 0, 0),
 			Color.rgb(0, 0, 168), Color.rgb(0, 168, 0), Color.rgb(0, 168, 168),
@@ -30,18 +30,18 @@ abstract public class NibblesScreen {
 
 	abstract protected void writeChar(char c, int x, int y, int color);
 
-	private Vector2D toPixelCoordinates(int x, int y) {
-		x = x * DOSCHARWIDTH;
+	private Point toPixelCoordinates(int x, int y) {
+		x = x * CHAR_WIDTH;
 		int part = y % 2;
-		y = (y - part) / 2 * DOSCHARHEIGHT + part * UPPERPIXELHEIGHT;
-		return new Vector2D(x, y);
+		y = (y - part) / 2 * CHAR_HEIGHT + part * UPPER_PART_HEIGHT;
+		return new Point(x, y);
 	}
 
-	public void update(Vector2D p, int color) {
-		update(p, p, color);
+	public void draw(Point p, int color) {
+		draw(p, p, color);
 	}
 
-	public void update(Vector2D p1, Vector2D p2, int qbColor) {
+	public void draw(Point p1, Point p2, int qbColor) {
 		int left = Math.min(p1.getX(), p2.getX());
 		int top = Math.min(p1.getY(), p2.getY());
 		int right = Math.max(p1.getX(), p2.getX()) + 1;
@@ -53,10 +53,10 @@ abstract public class NibblesScreen {
 		drawRect(p1.getX(), p1.getY(), p2.getX(), p2.getY(), qb2rgb(qbColor));
 	}
 
-	public void write(String text, Vector2D p, int color) {
+	public void write(String text, Point p, int color) {
 		for (int i = 0; i < text.length(); i++) {
-			Vector2D pp = toPixelCoordinates(p.getX() + i, p.getY());
-			writeChar(text.charAt(i), pp.getX(), pp.getY(), qb2rgb(color));
+			Point p0 = toPixelCoordinates(p.getX() + i, p.getY());
+			writeChar(text.charAt(i), p0.getX(), p0.getY(), qb2rgb(color));
 		}
 	}
 }

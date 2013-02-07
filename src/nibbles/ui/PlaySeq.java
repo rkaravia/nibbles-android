@@ -2,24 +2,21 @@ package nibbles.ui;
 
 import java.util.List;
 
-import nibbles.game.SoundSequence.FrequencyDuration;
+import nibbles.game.SoundSeq.FreqDuration;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
-import android.util.Log;
 
 public class PlaySeq implements Runnable {
 	private static final int SAMPLE_RATE = 8000;
 	private static final double PAUSE_FRACTION = 0.1;
 
-	private static final String TAG = "PlaySeq";
-
 	private AudioTrack audioTrack;
 
-	private final List<FrequencyDuration> seq;
+//	private final List<FreqDuration> seq;
 
-	public PlaySeq(List<FrequencyDuration> seq) {
-		this.seq = seq;
+	public PlaySeq(List<FreqDuration> seq) {
+		init(seq);
 		new Thread(this).start();
 	}
 
@@ -27,7 +24,7 @@ public class PlaySeq implements Runnable {
 		notify();
 	}
 
-	private void init(List<FrequencyDuration> seq) {
+	private void init(List<FreqDuration> seq) {
 		Tone[] tones = new Tone[seq.size()];
 		int totalNumSamples = 0;
 		for (int i = 0; i < tones.length; i++) {
@@ -48,7 +45,7 @@ public class PlaySeq implements Runnable {
 
 	@Override
 	public synchronized void run() {
-		init(seq);
+//		init(seq);
 		while (true) {
 			try {
 				wait();
@@ -69,10 +66,8 @@ public class PlaySeq implements Runnable {
 		private double frequency;
 		private final int nSamples;
 
-		public Tone(FrequencyDuration tone) {
-			this.frequency = tone.getFrequency();
-			Log.v(TAG, "Freq: " + tone.getFrequency());
-			Log.v(TAG, "Dur: " + tone.getDuration());
+		public Tone(FreqDuration tone) {
+			this.frequency = tone.getFreq();
 			nSamples = (int) (tone.getDuration() / 1000.0 * SAMPLE_RATE);
 		}
 

@@ -1,61 +1,38 @@
 package nibbles.game;
 
-public class Colors {
-	public static final Colors MONOCOLORS = new Colors(
-			new byte[]{15, 7},
-			(byte)7,
-			(byte)0,
-			(byte)15,
-			(byte)0,
-			(byte)15
-	);
-	
-	public static final Colors NORMALCOLORS = new Colors(
-			new byte[]{14, 13},
-			(byte)12,
-			(byte)1,
-			(byte)15,
-			(byte)4,
-			(byte)14
-	);
-	
-	private byte[] snakes;
-	private byte walls;
-	private byte background;
-	private byte dialogsForeground;
-	private byte dialogsBackground;
-	private byte food;
-	
-	public Colors(byte[] snakes, byte walls, byte background, byte dialogsForeground, byte dialogsBackground, byte food){
-		this.snakes = snakes;
-		this.walls = walls;
-		this.background = background;
-		this.dialogsForeground = dialogsForeground;
-		this.dialogsBackground = dialogsBackground;
-		this.food = food;
+import java.io.Serializable;
+
+public class Colors implements Serializable {
+	private static final long serialVersionUID = 1L;
+
+	public static final Colors NORMAL = new Colors(0);
+	public static final Colors MONO = new Colors(1);
+
+	public static enum ColorKey {
+		WALL(12, 7), BG(1, 0), DIALOG_FG(15, 15), DIALOG_BG(4, 0), FOOD(14, 15), SNAKE_0(
+				14, 15), SNAKE_1(13, 7);
+		private final int[] colors;
+
+		private ColorKey(int... colors) {
+			this.colors = colors;
+		}
+
+		public byte getColor(int i) {
+			return (byte) colors[i];
+		}
 	}
-	
-	public byte getSnake(int i){
-		return snakes[i];
+
+	private final int id;
+
+	private Colors(int id) {
+		this.id = id;
 	}
-	
-	public byte getWalls(){
-		return walls;
+
+	public byte get(ColorKey colorKey) {
+		return colorKey.getColor(id);
 	}
-	
-	public byte getBackground(){
-		return background;
-	}
-	
-	public byte getDialogsForeground(){
-		return dialogsForeground;
-	}
-	
-	public byte getDialogsBackground(){
-		return dialogsBackground;
-	}
-	
-	public byte getFood(){
-		return food;
+
+	public byte getSnake(int snakeId) {
+		return get(ColorKey.values()[ColorKey.SNAKE_0.ordinal() + snakeId]);
 	}
 }
