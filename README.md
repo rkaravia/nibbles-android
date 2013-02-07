@@ -13,7 +13,7 @@ nibbles-android is a clone of the popular 1990s game
 
 ### Running/Building
 
-To run: Download and install the [release version](release/Nibbles_0.1.0.apk) on your phone.
+To run: Download and install the [release version](release/Nibbles_0.1.0.apk?raw=true) on your phone.
 
 To build: Download or *git clone* this repository and import into the [Android SDK](http://developer.android.com/sdk/index.html).
 
