@@ -1,0 +1,26 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    
+    <nibbles.ui.NibblesView
+      android:id="@+id/nibbles"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"/>
+
+    <ImageView
+        android:id="@+id/muteImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/mute"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/unmuteImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:src="@drawable/unmute"
+        android:visibility="invisible" />
+
+</FrameLayout>
