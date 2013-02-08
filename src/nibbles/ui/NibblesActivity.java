@@ -9,6 +9,7 @@ import android.view.WindowManager;
 
 public class NibblesActivity extends Activity {
 	private NibblesView nibblesView;
+	private NibblesThread nibblesThread;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -20,25 +21,30 @@ public class NibblesActivity extends Activity {
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
 		// create view
-		nibblesView = new NibblesView(this, savedInstanceState);
-		setContentView(nibblesView);
+//		nibblesView = new NibblesView(this, savedInstanceState);
+//		setContentView(nibblesView);
+		setContentView(R.layout.nibbles_layout);
+		nibblesView = (NibblesView) findViewById(R.id.nibbles);
+		nibblesThread = nibblesView.getThread();
+		nibblesThread.init(savedInstanceState, this);
+//		nibblesView.init(savedInstanceState);
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		nibblesView.getThread().doPause();
+		nibblesThread.doPause();
 	}
 
 	@Override
 	protected void onSaveInstanceState(Bundle outState) {
 		super.onSaveInstanceState(outState);
-		nibblesView.getThread().saveState(outState);
+		nibblesThread.saveState(outState);
 	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		nibblesView.getThread().doKeyDown(keyCode);
+		nibblesThread.doKeyDown(keyCode);
 		return true;
 	}
 

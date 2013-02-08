@@ -1,7 +1,7 @@
 package nibbles.ui;
 
 import android.content.Context;
-import android.os.Bundle;
+import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -9,11 +9,11 @@ import android.view.SurfaceView;
 public class NibblesView extends SurfaceView implements SurfaceHolder.Callback {
 	private final NibblesThread thread;
 
-	public NibblesView(Context context, Bundle savedInstanceState) {
-		super(context);
+	public NibblesView(Context context, AttributeSet attrs) {
+		super(context, attrs);
 		SurfaceHolder holder = getHolder();
 		holder.addCallback(this);
-		thread = new NibblesThread(holder, getContext(), savedInstanceState);
+		thread = new NibblesThread(holder, getContext(), this);
 	}
 
 	public void doTouch(MotionEvent event) {

@@ -18,17 +18,27 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
+import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.ScaleAnimation;
 
 public class NibblesThread extends Thread {
 	private static final String KEY_NIBBLES_GAME = "NibblesGame";
 	private static final String KEY_MUTED = "Muted";
 
-	private boolean running = false;
-	private final SurfaceHolder surfaceHolder;
-	private Game nibblesGame;
 	private static final String TAG = "NT";
-	private AsciiCharWriter asciiWriter;
+	
+	private final SurfaceHolder surfaceHolder;
 	private final Context context;
+	private final NibblesView nibblesView;
+	private NibblesActivity nibblesActivity;
+	
+	private boolean running = false;
+	private Game nibblesGame;
+	private AsciiCharWriter asciiWriter;
+	private final int muteAnimTime;
+	
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
 
 	private final Speaker speaker = new Speaker() {
@@ -48,10 +58,15 @@ public class NibblesThread extends Thread {
 		}
 	};
 
-	public NibblesThread(SurfaceHolder surfaceHolder, Context context,
-			Bundle savedInstanceState) {
+	public NibblesThread(SurfaceHolder surfaceHolder, Context context, NibblesView nibblesView) {
 		this.surfaceHolder = surfaceHolder;
 		this.context = context;
+		this.nibblesView = nibblesView;//TODO remove?
+		muteAnimTime = context.getResources().getInteger(android.R.integer.config_mediumAnimTime);
+	}
+	
+	public void init(Bundle savedInstanceState, NibblesActivity nibblesActivity) {
+		this.nibblesActivity = nibblesActivity;
 		if (savedInstanceState == null) {
 			nibblesGame = new Game(1, 20, false);
 		} else {
@@ -122,8 +137,10 @@ public class NibblesThread extends Thread {
 				try {
 					c = surfaceHolder.lockCanvas();
 					synchronized (surfaceHolder) {
-						nibblesGame.step();
-						doDraw(c);
+						if (nibblesGame != null) {
+							nibblesGame.step();
+							doDraw(c);
+						}
 					}
 				} finally {
 					if (c != null) {
@@ -160,18 +177,31 @@ public class NibblesThread extends Thread {
 		} else {
 			switch (keyCode) {
 			case KeyEvent.KEYCODE_VOLUME_DOWN:
-				speaker.setMuted(true);
+				setMuted(true);
 				break;
 			case KeyEvent.KEYCODE_VOLUME_UP:
-				speaker.setMuted(false);
+				setMuted(false);
 				break;
 			case KeyEvent.KEYCODE_MUTE:
-				speaker.setMuted(!speaker.isMuted());
+				setMuted(!speaker.isMuted());
 				break;
 			default:
 				nibblesGame.toggleState();
 				break;
 			}
+		}
+	}
+	
+	private void setMuted(boolean muted) {
+		speaker.setMuted(muted);
+		if (nibblesActivity != null) {
+			int viewId;
+			if (muted) {
+				viewId = R.id.muteImage;
+			} else {
+				viewId = R.id.unmuteImage;
+			}
+			Notification.show(nibblesActivity.findViewById(viewId));
 		}
 	}
 
