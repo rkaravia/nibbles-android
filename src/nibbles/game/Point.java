@@ -72,4 +72,8 @@ public class Point implements Serializable {
 	public double length() {
 		return Math.sqrt(x * x + y * y);
 	}
+
+	public Point rotate180() {
+		return new Point(-x, -y);
+	}
 }

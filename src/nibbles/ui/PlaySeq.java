@@ -13,8 +13,6 @@ public class PlaySeq implements Runnable {
 
 	private AudioTrack audioTrack;
 
-//	private final List<FreqDuration> seq;
-
 	public PlaySeq(List<FreqDuration> seq) {
 		init(seq);
 		new Thread(this).start();
@@ -45,7 +43,6 @@ public class PlaySeq implements Runnable {
 
 	@Override
 	public synchronized void run() {
-//		init(seq);
 		while (true) {
 			try {
 				wait();

@@ -21,9 +21,12 @@ public class Game implements Serializable {
 	private final LogicTimer logicTimer;
 	private Random rnd = new Random();
 	
-	private SnakeAI snakeAI;
+	private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
 
 	transient private Speaker speaker;
+
+	private static final String TEXT_LAGGING = "LAGGING";
+	private static final Point P_LAGGING = new Point(35, 0);
 
 	public Game(int nPlayers, int speed, boolean isMonochrome) {
 		this.nPlayers = nPlayers;
@@ -33,9 +36,11 @@ public class Game implements Serializable {
 		restartLevel();
 	}
 
-	public Game(int nPlayers, int speed, boolean isMonochrome, int AIplayerId) {
+	public Game(int nPlayers, int speed, boolean isMonochrome, int[] AIplayerIds) {
 		this(nPlayers, speed, isMonochrome);
-		snakeAI = new SnakeAI(snakes[AIplayerId], arena);
+		for (int i = 0; i < AIplayerIds.length; i++) {
+			snakeAIs.add(new SnakeAI(snakes[AIplayerIds[i]], arena));			
+		}
 	}
 
 	public void initSpeaker(Speaker speaker) {
@@ -58,8 +63,8 @@ public class Game implements Serializable {
 	}
 
 	private void moveSnakes() {
-		if (snakeAI != null) {
-			snakeAI.stepBFS(foodPosition);
+		for (SnakeAI snakeAI : snakeAIs) {
+			snakeAI.stepASTAR(foodPosition);
 		}
 		for (Snake snake : snakes) {
 			snake.prepareStep();
@@ -135,19 +140,19 @@ public class Game implements Serializable {
 
 	public void addDirection(int snakeId, Point direction) {
 		if (snakeId < nPlayers) {
-			snakes[snakeId].addDirection(direction);
+			snakes[snakeId].direction().add(direction);
 		}
 	}
 
 	public void turnLeft(int snakeId) {
 		if (snakeId < nPlayers) {
-			snakes[snakeId].getDirectionBuffer().turnLeft();
+			snakes[snakeId].direction().turnLeft();
 		}
 	}
 
 	public void turnRight(int snakeId) {
 		if (snakeId < nPlayers) {
-			snakes[snakeId].getDirectionBuffer().turnRight();
+			snakes[snakeId].direction().turnRight();
 		}
 	}
 
@@ -156,8 +161,14 @@ public class Game implements Serializable {
 		for (Snake snake : snakes) {
 			snake.draw(screen, colorTable.get(ColorKey.DIALOG_FG));
 		}
+		for (SnakeAI snakeAI : snakeAIs) {
+			snakeAI.draw(screen);
+		}
 		screen.write(Integer.toString(foodNumber), foodPosition,
 				colorTable.get(ColorKey.FOOD));
+		if (logicTimer.isLagging()) {
+			screen.write(TEXT_LAGGING, P_LAGGING, colorTable.get(ColorKey.DIALOG_FG));
+		}
 	}
 
 	public void toggleState() {
@@ -174,7 +185,7 @@ public class Game implements Serializable {
 
 	public void unpause() {
 		for (Snake snake : snakes) {
-			snake.getDirectionBuffer().reset();
+			snake.direction().reset();
 		}
 		logicTimer.start();
 	}

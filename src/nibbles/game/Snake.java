@@ -32,10 +32,13 @@ public class Snake implements Serializable {
 
 	private final DirectionBuffer directionBuffer = new DirectionBuffer();
 
+	private final byte color;
+
 	public Snake(int id, Arena arena, Colors colorTable) {
 		this.id = id;
 		this.arena = arena;
 		this.colorTable = colorTable;
+		color = colorTable.getSnake(id);
 	}
 
 	public void init() {
@@ -88,18 +91,7 @@ public class Snake implements Serializable {
 			}
 		}
 
-		private synchronized void init(Point direction) {
-			buffer.clear();
-			buffer.add(direction);
-		}
-
-		private synchronized void update() {
-			if (buffer.size() > 1) {
-				buffer.removeFirst();
-			}
-		}
-
-		private synchronized void add(Point direction) {
+		public synchronized void add(Point direction) {
 			if (buffer.isEmpty()
 					|| !direction.absValues().equals(
 							buffer.getLast().absValues())) {
@@ -109,6 +101,17 @@ public class Snake implements Serializable {
 
 		public synchronized Point get() {
 			return buffer.getFirst();
+		}
+		
+		private synchronized void init(Point direction) {
+			buffer.clear();
+			buffer.add(direction);
+		}
+
+		private synchronized void update() {
+			if (buffer.size() > 1) {
+				buffer.removeFirst();
+			}
 		}
 	}
 
@@ -147,12 +150,8 @@ public class Snake implements Serializable {
 		return headPosition;
 	}
 
-	public void addDirection(Point direction) {
-		directionBuffer.add(direction);
-	}
-
 	private void addBodyPart(Point position) {
-		arena.setContent(position, colorTable.getSnake(id));
+		arena.setContent(position, color);
 		body.add(position);
 	}
 
@@ -198,7 +197,11 @@ public class Snake implements Serializable {
 		screen.write(info, infoLocation, textColor);
 	}
 
-	public DirectionBuffer getDirectionBuffer() {
+	public DirectionBuffer direction() {
 		return directionBuffer;
+	}
+
+	public byte getColor() {
+		return color;
 	}
 }

@@ -9,6 +9,7 @@ public class LogicTimer implements Serializable {
 	private long startTime;
 	private long logicTime;
 	private boolean paused;
+	private boolean lagging = false;
 	
 	public LogicTimer(long beatLength) {
 		this.beatLength = beatLength;
@@ -41,6 +42,11 @@ public class LogicTimer implements Serializable {
 			if (targetTime > logicTime) {
 				logicTime++;
 				changed = true;
+				lagging = targetTime > logicTime;
+				if (lagging) {
+					// reset time if lag occurs
+					start();
+				}
 			}
 		}
 		return changed;
@@ -52,5 +58,9 @@ public class LogicTimer implements Serializable {
 
 	public boolean isPaused() {
 		return paused;
+	}
+
+	public boolean isLagging() {
+		return lagging;
 	}
 }

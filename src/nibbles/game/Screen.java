@@ -26,7 +26,7 @@ abstract public class Screen {
 	}
 
 	abstract protected void drawRect(int left, int top, int right, int bottom,
-			int color);
+			int color, float alpha);
 
 	abstract protected void writeChar(char c, int x, int y, int color);
 
@@ -37,11 +37,19 @@ abstract public class Screen {
 		return new Point(x, y);
 	}
 
-	public void draw(Point p, int color) {
-		draw(p, p, color);
+	public void draw(Point p, int qbColor) {
+		draw(p, p, qbColor);
+	}
+	
+	public void draw(Point p, int qbColor, float alpha) {
+		draw(p, p, qbColor, alpha);
 	}
 
 	public void draw(Point p1, Point p2, int qbColor) {
+		draw(p1, p2, qbColor, 1);
+	}
+	
+	public void draw(Point p1, Point p2, int qbColor, float alpha) {
 		int left = Math.min(p1.getX(), p2.getX());
 		int top = Math.min(p1.getY(), p2.getY());
 		int right = Math.max(p1.getX(), p2.getX()) + 1;
@@ -50,7 +58,7 @@ abstract public class Screen {
 		p1 = toPixelCoordinates(left, top);
 		p2 = toPixelCoordinates(right, bottom);
 
-		drawRect(p1.getX(), p1.getY(), p2.getX(), p2.getY(), qb2rgb(qbColor));
+		drawRect(p1.getX(), p1.getY(), p2.getX(), p2.getY(), qb2rgb(qbColor), alpha);
 	}
 
 	public void write(String text, Point p, int color) {

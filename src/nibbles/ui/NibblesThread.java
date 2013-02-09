@@ -24,11 +24,11 @@ public class NibblesThread extends Thread {
 	private static final String KEY_MUTED = "Muted";
 
 	private static final String TAG = "NT";
-	
+
 	private final SurfaceHolder surfaceHolder;
 	private final Context context;
 	private NibblesActivity nibblesActivity;
-	
+
 	private boolean running = false;
 	private Game nibblesGame;
 	private AsciiCharWriter asciiWriter;
@@ -36,7 +36,7 @@ public class NibblesThread extends Thread {
 
 	private final Speaker speaker = new Speaker() {
 		private boolean muted = false;
-		
+
 		@Override
 		public void outputSoundSeq(int id) {
 			if (!muted) {
@@ -55,11 +55,11 @@ public class NibblesThread extends Thread {
 		this.surfaceHolder = surfaceHolder;
 		this.context = context;
 	}
-	
+
 	public void init(Bundle savedInstanceState, NibblesActivity nibblesActivity) {
 		this.nibblesActivity = nibblesActivity;
 		if (savedInstanceState == null) {
-			nibblesGame = new Game(2, 20, false, 1);
+			nibblesGame = new Game(1, 20, false, new int[] {0});
 		} else {
 			Log.v(TAG, "Restore");
 			nibblesGame = (Game) savedInstanceState
@@ -88,12 +88,14 @@ public class NibblesThread extends Thread {
 		canvas.scale(usedWidth / (float) Screen.WIDTH, usedHeight
 				/ (float) Screen.HEIGHT);
 		Screen screen = new Screen() {
+			Paint paint = new Paint();
+
 			@Override
 			protected void drawRect(int left, int top, int right, int bottom,
-					int color) {
-				Paint p = new Paint();
-				p.setColor(color);
-				canvas.drawRect(left, top, right, bottom, p);
+					int color, float alpha) {
+				paint.setColor(color);
+				paint.setAlpha((int) (alpha * 255));
+				canvas.drawRect(left, top, right, bottom, paint);
 			}
 
 			@Override
@@ -112,36 +114,49 @@ public class NibblesThread extends Thread {
 		asciiWriter = new AsciiCharWriter(charset, 8, 16, scaleX, scaleY);
 	}
 
-	@Override
-	public void run() {
-		while (true) {
-			synchronized (this) {
+	private synchronized void waitForSurface() {
+		if (!running) {
+			boolean retry = true;
+			while (retry) {
 				try {
-					if (!running) {
-						wait();
-					}
+					wait();
+					retry = false;
 				} catch (InterruptedException e) {
 				}
 			}
+		}
+	}
+
+	private synchronized void notifySurface() {
+		notify();
+	}
+
+	private void reDraw() {
+		Canvas c = null;
+		try {
+			c = surfaceHolder.lockCanvas();
+			synchronized (surfaceHolder) {
+				doDraw(c);
+			}
+		} finally {
+			if (c != null) {
+				surfaceHolder.unlockCanvasAndPost(c);
+			}
+		}
+	}
+
+	@Override
+	public void run() {
+		while (true) {
+			waitForSurface();
+			reDraw();
+			// TODO check if nibblesGame is null?
 			while (running) {
-				Canvas c = null;
-				try {
-					c = surfaceHolder.lockCanvas();
-					synchronized (surfaceHolder) {
-						if (nibblesGame != null) {
-							nibblesGame.step();
-							doDraw(c);
-						}
-					}
-				} finally {
-					if (c != null) {
-						surfaceHolder.unlockCanvasAndPost(c);
-					}
+				if (nibblesGame.step()) {
+					reDraw();
 				}
 			}
-			synchronized (this) {
-				notify();
-			}
+			notifySurface();
 		}
 	}
 
@@ -182,7 +197,7 @@ public class NibblesThread extends Thread {
 			}
 		}
 	}
-	
+
 	private void setMuted(boolean muted) {
 		speaker.setMuted(muted);
 		if (nibblesActivity != null) {
