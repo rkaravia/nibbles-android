@@ -15,19 +15,16 @@ public class NibblesActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// enable fullscreen mode
+		// enable full screen mode
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 				WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-		// create view
-//		nibblesView = new NibblesView(this, savedInstanceState);
-//		setContentView(nibblesView);
+		// init view and animation thread
 		setContentView(R.layout.nibbles_layout);
 		nibblesView = (NibblesView) findViewById(R.id.nibbles);
 		nibblesThread = nibblesView.getThread();
 		nibblesThread.init(savedInstanceState, this);
-//		nibblesView.init(savedInstanceState);
 	}
 
 	@Override

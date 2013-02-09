@@ -13,7 +13,7 @@ public class NibblesView extends SurfaceView implements SurfaceHolder.Callback {
 		super(context, attrs);
 		SurfaceHolder holder = getHolder();
 		holder.addCallback(this);
-		thread = new NibblesThread(holder, getContext(), this);
+		thread = new NibblesThread(holder, getContext());
 	}
 
 	public void doTouch(MotionEvent event) {

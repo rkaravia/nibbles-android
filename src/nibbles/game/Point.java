@@ -13,6 +13,8 @@ public class Point implements Serializable {
 	public static final Point UP = new Point(0, -1);
 	public static final Point DOWN = new Point(0, 1);
 
+	public static final Point[] DIRECTIONS = { LEFT, RIGHT, UP, DOWN };
+
 	public Point(int x, int y) {
 		this.x = x;
 		this.y = y;

@@ -3,6 +3,8 @@ package nibbles.game;
 import java.io.Serializable;
 import java.util.*;
 
+import nibbles.game.Colors.ColorKey;
+
 public class Snake implements Serializable {
 	private static final long serialVersionUID = 1L;
 
@@ -10,33 +12,35 @@ public class Snake implements Serializable {
 	public static final int SCORE_MULTIPLIER = 100;
 	public static final int DEATH_DEDUCTION = 10;
 
-	public static final SnakeData[] SNAKE_DATA = new SnakeData[] {
+	public static final SnakeData[] SNAKE_DATA = {
 			new SnakeData("SAMMY", "%1$s-->  Lives: %2$1d     %3$9d",
 					new Point(48, 0)),
 			new SnakeData("JAKE", "%3$9d  Lives: %2$1d  <--%1$s", new Point(0,
 					0)) };
 
-	private int nLives = INIT_N_LIVES;
-	private int score = 0;
+	private final int id;
+	private final Arena arena;
+	private final Colors colorTable;
 
-	private byte snakeColor;
-	private byte backgroundColor;
-	private Arena arena;
+	private int nLives;
+	private int score;
 
 	private LinkedList<Point> body;
 	private int targetLength;
 
 	private Point headPosition;
 
-	private final int id;
-
 	private final DirectionBuffer directionBuffer = new DirectionBuffer();
 
-	public Snake(byte snakeColor, byte backgroundColor, Arena arena, int id) {
-		this.snakeColor = snakeColor;
-		this.backgroundColor = backgroundColor;
-		this.arena = arena;
+	public Snake(int id, Arena arena, Colors colorTable) {
 		this.id = id;
+		this.arena = arena;
+		this.colorTable = colorTable;
+	}
+
+	public void init() {
+		nLives = INIT_N_LIVES;
+		score = 0;
 	}
 
 	private static class SnakeData {
@@ -103,19 +107,21 @@ public class Snake implements Serializable {
 			}
 		}
 
-		private synchronized Point get() {
+		public synchronized Point get() {
 			return buffer.getFirst();
 		}
 	}
 
-	public void init(Point initialHeadPosition, Point direction) {
+	public void startLevel(Level level) {
+		headPosition = level.getSnakeInitialHeadPosition(id);
+		Point direction = level.getSnakeInitialDirection(id);
 		directionBuffer.init(direction);
 		targetLength = 2;
 		body = new LinkedList<Point>();
 
-		Point initialTailPosition = initialHeadPosition.subtract(direction);
-		addBodyPart(initialTailPosition);
-		addBodyPart(initialHeadPosition);
+		Point tailPosition = headPosition.subtract(direction);
+		addBodyPart(tailPosition);
+		addBodyPart(headPosition);
 	}
 
 	public synchronized void prepareStep() {
@@ -146,19 +152,18 @@ public class Snake implements Serializable {
 	}
 
 	private void addBodyPart(Point position) {
-		arena.setContent(position, snakeColor);
+		arena.setContent(position, colorTable.getSnake(id));
 		body.add(position);
 	}
 
 	private void removeBodyPart() {
-		arena.setContent(body.removeFirst(), backgroundColor);
+		arena.setContent(body.removeFirst(), colorTable.get(ColorKey.BG));
 	}
 
 	private boolean doesCollide(Snake[] snakes) {
 		boolean headCollision = false;
-		for (int i = 0; i < snakes.length; i++) {
-			if (snakes[i] != this
-					&& snakes[i].headPosition.equals(headPosition)) {
+		for (Snake snake : snakes) {
+			if (snake != this && snake.headPosition.equals(headPosition)) {
 				headCollision = true;
 			}
 		}

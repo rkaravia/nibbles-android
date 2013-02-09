@@ -18,10 +18,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
-import android.view.View;
-import android.view.animation.Animation;
-import android.view.animation.Animation.AnimationListener;
-import android.view.animation.ScaleAnimation;
 
 public class NibblesThread extends Thread {
 	private static final String KEY_NIBBLES_GAME = "NibblesGame";
@@ -31,14 +27,11 @@ public class NibblesThread extends Thread {
 	
 	private final SurfaceHolder surfaceHolder;
 	private final Context context;
-	private final NibblesView nibblesView;
 	private NibblesActivity nibblesActivity;
 	
 	private boolean running = false;
 	private Game nibblesGame;
 	private AsciiCharWriter asciiWriter;
-	private final int muteAnimTime;
-	
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
 
 	private final Speaker speaker = new Speaker() {
@@ -58,17 +51,15 @@ public class NibblesThread extends Thread {
 		}
 	};
 
-	public NibblesThread(SurfaceHolder surfaceHolder, Context context, NibblesView nibblesView) {
+	public NibblesThread(SurfaceHolder surfaceHolder, Context context) {
 		this.surfaceHolder = surfaceHolder;
 		this.context = context;
-		this.nibblesView = nibblesView;//TODO remove?
-		muteAnimTime = context.getResources().getInteger(android.R.integer.config_mediumAnimTime);
 	}
 	
 	public void init(Bundle savedInstanceState, NibblesActivity nibblesActivity) {
 		this.nibblesActivity = nibblesActivity;
 		if (savedInstanceState == null) {
-			nibblesGame = new Game(1, 20, false);
+			nibblesGame = new Game(2, 20, false, 1);
 		} else {
 			Log.v(TAG, "Restore");
 			nibblesGame = (Game) savedInstanceState

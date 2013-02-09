@@ -20,6 +20,8 @@ public class Game implements Serializable {
 	private Snake[] snakes;
 	private final LogicTimer logicTimer;
 	private Random rnd = new Random();
+	
+	private SnakeAI snakeAI;
 
 	transient private Speaker speaker;
 
@@ -27,8 +29,13 @@ public class Game implements Serializable {
 		this.nPlayers = nPlayers;
 		colorTable = isMonochrome ? Colors.MONO : Colors.NORMAL;
 		logicTimer = new LogicTimer((1000 * 2) / (speed + 10));
-		resetGame();
-		startLevel();
+		initGame();
+		restartLevel();
+	}
+
+	public Game(int nPlayers, int speed, boolean isMonochrome, int AIplayerId) {
+		this(nPlayers, speed, isMonochrome);
+		snakeAI = new SnakeAI(snakes[AIplayerId], arena);
 	}
 
 	public void initSpeaker(Speaker speaker) {
@@ -51,6 +58,9 @@ public class Game implements Serializable {
 	}
 
 	private void moveSnakes() {
+		if (snakeAI != null) {
+			snakeAI.stepBFS(foodPosition);
+		}
 		for (Snake snake : snakes) {
 			snake.prepareStep();
 		}
@@ -73,42 +83,45 @@ public class Game implements Serializable {
 				resetGame();
 			}
 			speaker.playSoundSeq(SoundSeq.DEATH);
-			startLevel();
+			restartLevel();
 		} else if (snakeAte) {
 			if (foodNumber == MAX_FOOD_NUMBER) {
 				nLevel++;
-				nextLevel();
+				startLevel();
 			} else {
 				nextFood();
 			}
 		}
 	}
 
-	private void nextLevel() {
+	private void startLevel() {
 		pause();
-		Level level = Level.get(nLevel);
 		arena.setLevel(nLevel);
-
-		for (int i = 0; i < nPlayers; i++) {
-			snakes[i].init(level.getSnakeInitialHeadPosition(i),
-					level.getSnakeInitialDirection(i));
+		for (Snake snake : snakes) {
+			snake.startLevel(Level.get(nLevel));
 		}
 		foodNumber = 0;
 		nextFood();
 	}
 
-	private void startLevel() {
-		nextLevel();
+	private void restartLevel() {
+		startLevel();
 		startLevelSound = true;
+	}
+	
+	private void initGame() {
+		arena = new Arena(colorTable, logicTimer);
+		snakes = new Snake[nPlayers];
+		for (int i = 0; i < nPlayers; i++) {
+			snakes[i] = new Snake(i, arena, colorTable);
+		}
+		resetGame();
 	}
 
 	private void resetGame() {
-		arena = new Arena(colorTable, logicTimer);
 		nLevel = 0;
-		snakes = new Snake[nPlayers];
-		for (int i = 0; i < nPlayers; i++) {
-			snakes[i] = new Snake(colorTable.getSnake(i),
-					colorTable.get(ColorKey.BG), arena, i);
+		for (Snake snake : snakes) {
+			snake.init();
 		}
 	}
 

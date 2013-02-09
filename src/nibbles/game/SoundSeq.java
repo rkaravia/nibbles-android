@@ -8,14 +8,11 @@ public class SoundSeq {
 	private static final double HALF_NOTE = Math.pow(2, 1.0 / 12.0);
 	private static final int TUNE = 12;
 
-	private static final SoundSeqElem[][] PREDEF = new SoundSeqElem[][] {
-			new SoundSeqElem[] { new Tempo(160), new Octave(2),
-					new NoteLength(20), new Notes("CDEDCD"),
-					new NoteLength(10), new Notes("ECC") },
-			new SoundSeqElem[] { new Octave(1), new NoteLength(16),
-					new Notes("CCCE") },
-			new SoundSeqElem[] { new Octave(0), new NoteLength(32),
-					new Notes("EFGEFDC") } };
+	private static final SoundSeqElem[][] PREDEF = {
+			{ new Tempo(160), new Octave(2), new NoteLength(20),
+					new Notes("CDEDCD"), new NoteLength(10), new Notes("ECC") },
+			{ new Octave(1), new NoteLength(16), new Notes("CCCE") },
+			{ new Octave(0), new NoteLength(32), new Notes("EFGEFDC") } };
 
 	public static final int START_ROUND = 0;
 	public static final int HIT_NUMBER = 1;
