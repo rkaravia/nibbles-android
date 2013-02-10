@@ -10,23 +10,27 @@ public class Game implements Serializable {
 
 	public static final int MAX_FOOD_NUMBER = 9;
 
-	private int nPlayers;
-	private Colors colorTable;
-	private int nLevel;
+	private static final String TEXT_LAGGING = "LAGGING";
+	private static final Point P_LAGGING = new Point(35, 0);
+
+	private final int nPlayers;
+	private final LogicTimer logicTimer;
+	private final Colors colorTable;
+
+	private int nLevel = 0;
+	private boolean gameOver = false;
+
+	private Arena arena;
+	private Snake[] snakes;
+	transient private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
+	transient private Speaker speaker;
+	transient private GameOverListener gameOverListener;
+
 	private int foodNumber;
 	private Point foodPosition;
 	private boolean startLevelSound;
-	private Arena arena;
-	private Snake[] snakes;
-	private final LogicTimer logicTimer;
+
 	private Random rnd = new Random();
-	
-	transient private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
-
-	transient private Speaker speaker;
-
-	private static final String TEXT_LAGGING = "LAGGING";
-	private static final Point P_LAGGING = new Point(35, 0);
 
 	public Game(int nPlayers, int speed, boolean isMonochrome) {
 		this.nPlayers = nPlayers;
@@ -36,14 +40,18 @@ public class Game implements Serializable {
 		restartLevel();
 	}
 
+	public void setGameOverListener(GameOverListener gameOverListener) {
+		this.gameOverListener = gameOverListener;
+	}
+
 	public void initSpeaker(Speaker speaker) {
 		this.speaker = speaker;
 		SoundSeq.init(speaker);
 	}
-	
+
 	public void initAI(int... playerIds) {
 		for (int i = 0; i < playerIds.length; i++) {
-			snakeAIs.add(new SnakeAI(snakes[playerIds[i]], arena));			
+			snakeAIs.add(new SnakeAI(snakes[playerIds[i]], arena));
 		}
 	}
 
@@ -70,7 +78,6 @@ public class Game implements Serializable {
 		}
 
 		boolean snakeLostLife = false;
-		boolean snakeDied = false;
 		boolean snakeAte = false;
 		for (Snake snake : snakes) {
 			if (!snakeAte && snake.doesEat(foodPosition, foodNumber)) {
@@ -79,15 +86,17 @@ public class Game implements Serializable {
 			}
 			if (!snake.step(snakes)) {
 				snakeLostLife = true;
-				snakeDied = snakeDied || (snake.getNLives() == 0);
+				gameOver = gameOver || (snake.getNLives() == 0);
 			}
 		}
 		if (snakeLostLife) {
-			if (snakeDied) {
-				resetGame();
-			}
 			speaker.playSoundSeq(SoundSeq.DEATH);
-			restartLevel();
+			if (gameOver) {
+				pause();
+				gameOverListener.gameOver();
+			} else {
+				restartLevel();
+			}
 		} else if (snakeAte) {
 			if (foodNumber == MAX_FOOD_NUMBER) {
 				nLevel++;
@@ -112,18 +121,13 @@ public class Game implements Serializable {
 		startLevel();
 		startLevelSound = true;
 	}
-	
+
 	private void initGame() {
 		arena = new Arena(colorTable, logicTimer);
 		snakes = new Snake[nPlayers];
 		for (int i = 0; i < nPlayers; i++) {
 			snakes[i] = new Snake(i, arena, colorTable);
 		}
-		resetGame();
-	}
-
-	private void resetGame() {
-		nLevel = 0;
 		for (Snake snake : snakes) {
 			snake.init();
 		}
@@ -160,13 +164,14 @@ public class Game implements Serializable {
 		for (Snake snake : snakes) {
 			snake.draw(screen, colorTable.get(ColorKey.DIALOG_FG));
 		}
-//		for (SnakeAI snakeAI : snakeAIs) {
-//			snakeAI.draw(screen);
-//		}
+		// for (SnakeAI snakeAI : snakeAIs) {
+		// snakeAI.draw(screen);
+		// }
 		screen.write(Integer.toString(foodNumber), foodPosition,
 				colorTable.get(ColorKey.FOOD));
 		if (logicTimer.isLagging()) {
-			screen.write(TEXT_LAGGING, P_LAGGING, colorTable.get(ColorKey.DIALOG_FG));
+			screen.write(TEXT_LAGGING, P_LAGGING,
+					colorTable.get(ColorKey.DIALOG_FG));
 		}
 	}
 
@@ -183,9 +188,11 @@ public class Game implements Serializable {
 	}
 
 	public void unpause() {
-		for (Snake snake : snakes) {
-			snake.direction().reset();
+		if (!gameOver) {
+			for (Snake snake : snakes) {
+				snake.direction().reset();
+			}
+			logicTimer.start();
 		}
-		logicTimer.start();
 	}
 }

@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nibbles</string>
+    <string name="n_players_prompt">Number of Players</string>
+    <string name="monochrome">Monochrome Colors</string>
+    <string name="start">Start</string>
 </resources>

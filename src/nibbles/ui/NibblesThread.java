@@ -3,9 +3,11 @@ package nibbles.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import nibbles.settings.Settings;
 import nibbles.ui.R;
 
 import nibbles.game.Game;
+import nibbles.game.GameOverListener;
 import nibbles.game.Screen;
 import nibbles.game.Speaker;
 import nibbles.game.SoundSeq.FreqDuration;
@@ -35,13 +37,9 @@ public class NibblesThread extends Thread {
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
 
 	private final Speaker speaker = new Speaker() {
-		private boolean muted = true;
-
 		@Override
 		public void outputSoundSeq(int id) {
-			if (!muted) {
-				playSeqPool.get(id).play();
-			}
+			playSeqPool.get(id).play();
 		}
 
 		@Override
@@ -56,18 +54,24 @@ public class NibblesThread extends Thread {
 		this.context = context;
 	}
 
-	public void init(Bundle savedInstanceState, NibblesActivity nibblesActivity) {
+	public void init(Bundle savedInstanceState,
+			NibblesActivity nibblesActivity, Settings.Values settings,
+			GameOverListener gameOverListener) {
 		this.nibblesActivity = nibblesActivity;
+		int nPlayers = settings.getnPlayers();
 		if (savedInstanceState == null) {
-			nibblesGame = new Game(2, 20, false);
+			nibblesGame = new Game(nPlayers, 20, settings.isMonochrome());
 		} else {
 			Log.v(TAG, "Restore");
 			nibblesGame = (Game) savedInstanceState
 					.getSerializable(KEY_NIBBLES_GAME);
 			speaker.setMuted(savedInstanceState.getBoolean(KEY_MUTED));
 		}
+		nibblesGame.setGameOverListener(gameOverListener);
 		nibblesGame.initSpeaker(speaker);
-		nibblesGame.initAI(0, 1);
+		if (nPlayers == 2) {
+			nibblesGame.initAI(1);
+		}
 	}
 
 	private void doDraw(final Canvas canvas) {
@@ -175,7 +179,7 @@ public class NibblesThread extends Thread {
 		}
 	}
 
-	public void doKeyDown(int keyCode) {
+	public boolean doKeyDown(int keyCode) {
 		KeyMapper.SnakeEvent snakeEvent = KeyMapper.STANDARD_MAPPER
 				.map(keyCode);
 		if (snakeEvent != null) {
@@ -192,11 +196,14 @@ public class NibblesThread extends Thread {
 			case KeyEvent.KEYCODE_MUTE:
 				setMuted(!speaker.isMuted());
 				break;
-			default:
+			case KeyEvent.KEYCODE_DPAD_CENTER:
 				nibblesGame.toggleState();
 				break;
+			default:
+				return false;
 			}
 		}
+		return true;
 	}
 
 	private void setMuted(boolean muted) {

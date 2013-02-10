@@ -12,17 +12,22 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name" >
-        <!--  android:theme="@style/AppTheme" > -->
         <activity
-            android:name="nibbles.ui.NibblesActivity"
-            android:screenOrientation="landscape"
+            android:name="nibbles.settings.Settings"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/app_name" >
-            <!-- android:theme="@style/FullscreenTheme" > -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="nibbles.ui.NibblesActivity"
+            android:label="@string/app_name"
+            android:screenOrientation="landscape" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="nibbles.settings.Settings" />
         </activity>
     </application>
 

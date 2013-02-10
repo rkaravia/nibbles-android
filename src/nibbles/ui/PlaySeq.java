@@ -68,6 +68,7 @@ public class PlaySeq implements Runnable {
 			nSamples = (int) (tone.getDuration() / 1000.0 * SAMPLE_RATE);
 		}
 
+		// TODO get rid of clicking between notes
 		public void generatePCM(short[] buffer, int offset) {
 			int numNonNullSamples = (int) ((1 - PAUSE_FRACTION) * nSamples);
 			for (int i = 0; i < numNonNullSamples; i++) {

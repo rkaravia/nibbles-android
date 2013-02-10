@@ -61,6 +61,6 @@ public class LogicTimer implements Serializable {
 	}
 
 	public boolean isLagging() {
-		return lagging;
+		return !paused && lagging;
 	}
 }
