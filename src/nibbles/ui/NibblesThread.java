@@ -35,7 +35,7 @@ public class NibblesThread extends Thread {
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
 
 	private final Speaker speaker = new Speaker() {
-		private boolean muted = false;
+		private boolean muted = true;
 
 		@Override
 		public void outputSoundSeq(int id) {
@@ -59,7 +59,7 @@ public class NibblesThread extends Thread {
 	public void init(Bundle savedInstanceState, NibblesActivity nibblesActivity) {
 		this.nibblesActivity = nibblesActivity;
 		if (savedInstanceState == null) {
-			nibblesGame = new Game(1, 20, false, new int[] {0});
+			nibblesGame = new Game(2, 20, false);
 		} else {
 			Log.v(TAG, "Restore");
 			nibblesGame = (Game) savedInstanceState
@@ -67,6 +67,7 @@ public class NibblesThread extends Thread {
 			speaker.setMuted(savedInstanceState.getBoolean(KEY_MUTED));
 		}
 		nibblesGame.initSpeaker(speaker);
+		nibblesGame.initAI(0, 1);
 	}
 
 	private void doDraw(final Canvas canvas) {

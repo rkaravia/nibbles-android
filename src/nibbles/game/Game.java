@@ -21,7 +21,7 @@ public class Game implements Serializable {
 	private final LogicTimer logicTimer;
 	private Random rnd = new Random();
 	
-	private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
+	transient private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
 
 	transient private Speaker speaker;
 
@@ -36,16 +36,15 @@ public class Game implements Serializable {
 		restartLevel();
 	}
 
-	public Game(int nPlayers, int speed, boolean isMonochrome, int[] AIplayerIds) {
-		this(nPlayers, speed, isMonochrome);
-		for (int i = 0; i < AIplayerIds.length; i++) {
-			snakeAIs.add(new SnakeAI(snakes[AIplayerIds[i]], arena));			
-		}
-	}
-
 	public void initSpeaker(Speaker speaker) {
 		this.speaker = speaker;
 		SoundSeq.init(speaker);
+	}
+	
+	public void initAI(int... playerIds) {
+		for (int i = 0; i < playerIds.length; i++) {
+			snakeAIs.add(new SnakeAI(snakes[playerIds[i]], arena));			
+		}
 	}
 
 	public boolean step() {
@@ -161,9 +160,9 @@ public class Game implements Serializable {
 		for (Snake snake : snakes) {
 			snake.draw(screen, colorTable.get(ColorKey.DIALOG_FG));
 		}
-		for (SnakeAI snakeAI : snakeAIs) {
-			snakeAI.draw(screen);
-		}
+//		for (SnakeAI snakeAI : snakeAIs) {
+//			snakeAI.draw(screen);
+//		}
 		screen.write(Integer.toString(foodNumber), foodPosition,
 				colorTable.get(ColorKey.FOOD));
 		if (logicTimer.isLagging()) {
