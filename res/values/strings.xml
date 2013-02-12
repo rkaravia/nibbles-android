@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Nibbles</string>
-    <string name="n_players_prompt">Number of Players</string>
-    <string name="monochrome">Monochrome Colors</string>
-    <string name="start">Start</string>
+    <string name="pref_speed">Speed</string>
+    <string name="pref_speed_default">20</string>
+    <string name="pref_human_players">Human Players</string>
+    <string name="pref_adversaries">AI Adversaries</string>
+    <string name="pref_monochrome">Monochrome Colors</string>
+    <string name="start">Start!</string>
 </resources>

@@ -10,7 +10,7 @@ public class Colors implements Serializable {
 
 	public static enum ColorKey {
 		WALL(12, 7), BG(1, 0), DIALOG_FG(15, 15), DIALOG_BG(4, 0), FOOD(14, 15), SNAKE_0(
-				14, 15), SNAKE_1(13, 7);
+				14, 15), SNAKE_1(13, 7), SNAKE_2(10, 15), SNAKE_3(11, 7);
 		private final int[] colors;
 
 		private ColorKey(int... colors) {

@@ -13,10 +13,14 @@ public class Level {
 				new Point[]{
 						new Point(49, 24),
 						new Point(29, 24),
+						new Point(39, 21),
+						new Point(39, 27),
 				},
 				new Point[]{
 						Point.RIGHT,
 						Point.LEFT,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 				}
@@ -25,10 +29,14 @@ public class Level {
 				new Point[]{
 						new Point(59, 6),
 						new Point(19, 42),
+						new Point(19, 6),
+						new Point(59, 42),
 				},
 				new Point[]{
 						Point.LEFT,
 						Point.RIGHT,
+						Point.RIGHT,
+						Point.LEFT,
 				},
 				new Wall[]{
 						new Wall(new Point(19, 24), 41, Point.RIGHT),
@@ -38,8 +46,12 @@ public class Level {
 				new Point[]{
 						new Point(49, 24),
 						new Point(29, 24),
+						new Point(9, 24),
+						new Point(69, 24),
 				},
 				new Point[]{
+						Point.UP,
+						Point.DOWN,
 						Point.UP,
 						Point.DOWN,
 				},
@@ -52,10 +64,14 @@ public class Level {
 				new Point[]{
 						new Point(59, 6),
 						new Point(19, 42),
+						new Point(69, 42),
+						new Point(9, 6),
 				},
 				new Point[]{
 						Point.LEFT,
 						Point.RIGHT,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 						new Wall(new Point(19, 3), 27, Point.DOWN),
@@ -68,10 +84,14 @@ public class Level {
 				new Point[]{
 						new Point(49, 24),
 						new Point(29, 24),
+						new Point(39, 16),
+						new Point(39, 32),
 				},
 				new Point[]{
 						Point.UP,
 						Point.DOWN,
+						Point.LEFT,
+						Point.RIGHT,
 				},
 				new Wall[]{
 						new Wall(new Point(20, 12), 27, Point.DOWN),
@@ -84,10 +104,14 @@ public class Level {
 				new Point[]{
 						new Point(64, 6),
 						new Point(14, 42),
+						new Point(64, 42),
+						new Point(14, 6),
 				},
 				new Point[]{
 						Point.DOWN,
 						Point.UP,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 						new Wall(new Point(9, 3), 19, Point.DOWN),
@@ -110,10 +134,14 @@ public class Level {
 				new Point[]{
 						new Point(64, 6),
 						new Point(14, 42),
+						new Point(64, 42),
+						new Point(14, 6),
 				},
 				new Point[]{
 						Point.DOWN,
 						Point.UP,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 						new Wall(new Point(39, 3), 23, DOWN_2),
@@ -123,10 +151,14 @@ public class Level {
 				new Point[]{
 						new Point(64, 6),
 						new Point(14, 42),
+						new Point(44, 42),
+						new Point(34, 6),
 				},
 				new Point[]{
 						Point.DOWN,
 						Point.UP,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 						new Wall(new Point(9, 3), 37, Point.DOWN),
@@ -142,10 +174,14 @@ public class Level {
 				new Point[]{
 						new Point(74, 39),
 						new Point(4, 14),
+						new Point(42, 6),
+						new Point(36, 46),
 				},
 				new Point[]{
 						Point.UP,
 						Point.DOWN,
+						Point.RIGHT,
+						Point.LEFT,
 				},
 				new Wall[]{
 						new Wall(new Point(5, 5), 42, DOWN_RIGHT),
@@ -156,10 +192,14 @@ public class Level {
 				new Point[]{
 						new Point(64, 6),
 						new Point(14, 42),
+						new Point(64, 42),
+						new Point(14, 6),
 				},
 				new Point[]{
 						Point.DOWN,
 						Point.UP,
+						Point.UP,
+						Point.DOWN,
 				},
 				new Wall[]{
 						new Wall(new Point(9, 3), 23, DOWN_2),

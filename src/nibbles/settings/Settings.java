@@ -1,101 +1,76 @@
 package nibbles.settings;
 
-import java.io.Serializable;
-
 import nibbles.ui.NibblesActivity;
 import nibbles.ui.R;
-import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
-import android.widget.CompoundButton.OnCheckedChangeListener;
-import android.widget.Spinner;
+import android.preference.ListPreference;
+import android.preference.PreferenceActivity;
 
-public class Settings extends Activity {
-	public static final String KEY_SETTINGS = "nibbles.settings.SETTINGS";
+public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
+	public static final String KEY_PREF_SPEED = "pref_speed";
+	public static final String KEY_PREF_HUMAN_PLAYERS = "pref_human_players";
+	public static final String KEY_PREF_ADVERSARIES = "pref_adversaries";
+	public static final String KEY_PREF_MONOCHROME = "pref_monochrome";
+	public static final String KEY_PREF_START = "pref_start";
 	
-	private static final int N_PLAYERS_MAX = 2;
+	private ListPreference nPlayersPref;
+	private ListPreference nAdversariesPref;
+	private ListPreference speedPref;
 
-	public static class Values implements Serializable {
-		private static final long serialVersionUID = 1L;
-		
-		private final int nPlayers;
-		private final boolean isMonochrome;
-		
-		private Values(int nPlayers, boolean isMonochrome) {
-			this.nPlayers = nPlayers;
-			this.isMonochrome = isMonochrome;
+	private void initQuantityChoice(ListPreference pref, int quantity, int from, int to) {
+		int nEntries = to - from + 1;
+		String[] values = new String[nEntries];
+		String[] entries = new String[nEntries];
+		for (int i = 0; i < nEntries; i++) {
+			int value = from + i;
+			values[i] = Integer.toString(value);
+			entries[i] = getResources().getQuantityString(quantity, value, value);
 		}
-
-		public int getnPlayers() {
-			return nPlayers;
-		}
-		
-		public boolean isMonochrome() {
-			return isMonochrome;
-		}
-	}
-
-	private void initSpinner() {
-		String[] playerChoices = new String[N_PLAYERS_MAX];
-		for (int i = 1; i <= N_PLAYERS_MAX; i++) {
-			playerChoices[i - 1] = String.format(getResources()
-					.getQuantityString(R.plurals.player, i), i);
-		}
-		Spinner spinner = (Spinner) findViewById(R.id.spinner1);
-		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, playerChoices);
-		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-		spinner.setAdapter(adapter);
-//		spinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-//			@Override
-//			public void onItemSelected(AdapterView<?> parent, View view,
-//					int pos, long id) {
-//				values.setnPlayers(pos + 1);
-//			}
-//
-//			@Override
-//			public void onNothingSelected(AdapterView<?> parent) {
-//			}
-//		});
+		pref.setEntryValues(values);
+		pref.setEntries(entries);
+		pref.setDefaultValue(values[0]);
+		updateSummary(pref);
 	}
 	
-//	private void initCheckbox() {
-//		CheckBox checkBox = (CheckBox) findViewById(R.id.checkBox1);
-//		checkBox.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-//			@Override
-//			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//				values.setMonochrome(isChecked);
-//			}
-//		});
-//	}
-	
-	public void startGame (View view) {
-	    Intent intent = new Intent(this, NibblesActivity.class);
-		Spinner spinner = (Spinner) findViewById(R.id.spinner1);
-		CheckBox checkBox = (CheckBox) findViewById(R.id.checkBox1);
-		Values values = new Values(spinner.getSelectedItemPosition() + 1, checkBox.isChecked());
-	    intent.putExtra(KEY_SETTINGS, values);
-	    startActivity(intent);
+	@SuppressWarnings("deprecation")
+	private void initPrefs() {
+		nPlayersPref = (ListPreference) findPreference(KEY_PREF_HUMAN_PLAYERS);
+		initQuantityChoice(nPlayersPref, R.plurals.player, 1, 2); //TODO outsource constants 1, 2
+		
+		nAdversariesPref = (ListPreference) findPreference(KEY_PREF_ADVERSARIES);
+		initQuantityChoice(nAdversariesPref, R.plurals.adversary, 0, 2); //TODO outsource constants 0, 2
+		
+		speedPref = (ListPreference) findPreference(KEY_PREF_SPEED);
+		updateSummary(speedPref);
+		
+		findPreference(KEY_PREF_START).setIntent(new Intent(this, NibblesActivity.class));
 	}
+	
+    @SuppressWarnings("deprecation")
+	@Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        addPreferencesFromResource(R.xml.preferences);
+        initPrefs();
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    }
+    
+    private void updateSummary(ListPreference pref) {
+    	pref.setSummary(pref.getEntry());
+    }
 
 	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.nibbles_settings);
-
-		initSpinner();
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		if (key.equals(KEY_PREF_SPEED)) {
+			updateSummary(speedPref);
+		} else if (key.equals(KEY_PREF_HUMAN_PLAYERS)) {
+			updateSummary(nPlayersPref);
+		} else if (key.equals(KEY_PREF_ADVERSARIES)) {
+			updateSummary(nAdversariesPref);
+		}
 	}
-
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		// TODO Auto-generated method stub
-		super.onSaveInstanceState(outState);
-	}
-
 }

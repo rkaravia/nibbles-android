@@ -12,7 +12,7 @@ public class Snake implements Serializable {
 	public static final int SCORE_MULTIPLIER = 100;
 	public static final int DEATH_DEDUCTION = 10;
 
-	public static final SnakeData[] SNAKE_DATA = {
+	private static final SnakeData[] SNAKE_DATA = {
 			new SnakeData("SAMMY", "%1$s-->  Lives: %2$1d     %3$9d",
 					new Point(48, 0)),
 			new SnakeData("JAKE", "%3$9d  Lives: %2$1d  <--%1$s", new Point(0,
@@ -191,10 +191,12 @@ public class Snake implements Serializable {
 			screen.draw(sisterPoint, arena.getColor(sisterPoint));
 		}
 
-		String info = String.format(SNAKE_DATA[id].getFormat(),
-				SNAKE_DATA[id].getName(), nLives, score * 100);
-		Point infoLocation = SNAKE_DATA[id].getInfoLocation();
-		screen.write(info, infoLocation, textColor);
+		if (id < SNAKE_DATA.length) {
+			String info = String.format(SNAKE_DATA[id].getFormat(),
+					SNAKE_DATA[id].getName(), nLives, score * 100);
+			Point infoLocation = SNAKE_DATA[id].getInfoLocation();
+			screen.write(info, infoLocation, textColor);
+		}
 	}
 
 	public DirectionBuffer direction() {

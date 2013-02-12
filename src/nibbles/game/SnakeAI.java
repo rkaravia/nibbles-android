@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 import nibbles.game.Snake.DirectionBuffer;
@@ -17,8 +16,11 @@ public class SnakeAI implements Serializable {
 
 	private final int[][] f = new int[Arena.WIDTH][Arena.HEIGHT];
 
-	private final PriorityQueue<Point> queue = new PriorityQueue<Point>(Arena.WIDTH * Arena.HEIGHT,
-			new Comparator<Point>() {
+	private Point head;
+	private Point futureHead;
+
+	private final PriorityQueue<Point> queue = new PriorityQueue<Point>(
+			Arena.WIDTH * Arena.HEIGHT, new Comparator<Point>() {
 				@Override
 				public int compare(Point p1, Point p2) {
 					return f[p1.getX()][p1.getY()] - f[p2.getX()][p2.getY()];
@@ -36,55 +38,64 @@ public class SnakeAI implements Serializable {
 		return Math.abs(p1.getX() - p2.getX())
 				+ Math.abs(p1.getY() - p2.getY());
 	}
-	
-	private void setGoal(Point p) {
-		f[p.getX()][p.getY()] = manhattanDist(p, snake.getHeadPosition());
-		queue.add(p);
+
+	private int h(Point p) {
+		return manhattanDist(p, head) + manhattanDist(p, futureHead);
 	}
 
-	public void stepASTAR(Point food) {
-		DirectionBuffer dirBuffer = snake.direction();
-		Point head = snake.getHeadPosition();
-		Point futureHead = head.add(dirBuffer.get());
+	private void setGoal(Point p) {
+		f[p.getX()][p.getY()] = h(p);
+		queue.add(p);
+	}
+	
+	private boolean AStar() {
+		while (!queue.isEmpty()) {
+			Point p = queue.poll();
+			int g = f[p.getX()][p.getY()] - h(p);
+			for (Point d : Point.DIRECTIONS) {
+				Point cand = p.add(d);
+				if (cand.equals(head)) {
+					snake.direction().add(d.rotate180());
+					return true;
+				} else if (arena.isEmpty(cand)) {
+					int candX = cand.getX();
+					int candY = cand.getY();
+					if (f[candX][candY] == DST_UNKNOWN) {
+						f[candX][cand.getY()] = g + 2 + h(cand);
+						queue.add(cand);
+					}
+				}
+			}
+		}
+		return false;
+	}
+
+	public void step(Point food) {
+		head = snake.getHeadPosition();
+		futureHead = head.add(snake.direction().get());
 		for (int x = 0; x < Arena.WIDTH; x++) {
 			Arrays.fill(f[x], DST_UNKNOWN);
 		}
 		queue.clear();
 		setGoal(food);
 		setGoal(Arena.getSiblingPoint(food));
-		boolean foundHead = false;
-		while (!queue.isEmpty() && !foundHead) {
-			Point p = queue.poll();
-			int g = f[p.getX()][p.getY()] - manhattanDist(p, head);
-			for (Point d : Point.DIRECTIONS) {
-				Point cand = p.add(d);
-				if (cand.equals(head)) {
-					dirBuffer.add(d.rotate180());
-					foundHead = true;
-				} else if (arena.isEmpty(cand)) {
-					int candX = cand.getX();
-					int candY = cand.getY();
-					if (cand.equals(futureHead)) {
-						foundHead = true;
-					} else if (f[candX][candY] == DST_UNKNOWN) {
-						f[candX][cand.getY()] = g + 1
-								+ manhattanDist(cand, head);
-						queue.add(cand);
-					}
-				}
+		if (!AStar()) {
+			survivalDirection();
+		}
+	}
+
+	private void survivalDirection() {
+		// TODO random choice
+		DirectionBuffer dirBuffer = snake.direction();
+		HashSet<Point> possibleDirs = new HashSet<Point>();
+		for (Point d : Point.DIRECTIONS) {
+			if (arena.isEmpty(head.add(d))) {
+				possibleDirs.add(d);
 			}
 		}
-		if (!foundHead) {
-			HashSet<Point> possibleDirs = new HashSet<Point>();
-			for (Point d : Point.DIRECTIONS) {
-				if (arena.isEmpty(head.add(d))) {
-					possibleDirs.add(d);
-				}
-			}
-			if (!possibleDirs.isEmpty()
-					&& !possibleDirs.contains(dirBuffer.get())) {
-				dirBuffer.add((Point) possibleDirs.toArray()[0]);
-			}
+		if (!possibleDirs.isEmpty()
+				&& !possibleDirs.contains(dirBuffer.get())) {
+			dirBuffer.add((Point) possibleDirs.toArray()[0]);
 		}
 	}
 

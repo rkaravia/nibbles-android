@@ -1,7 +1,6 @@
 package nibbles.ui;
 
 import nibbles.game.GameOverListener;
-import nibbles.settings.Settings;
 import android.app.Activity;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -26,11 +25,7 @@ public class NibblesActivity extends Activity implements GameOverListener {
 		setContentView(R.layout.nibbles_running);
 		nibblesView = (NibblesView) findViewById(R.id.nibbles);
 		nibblesThread = nibblesView.getThread();
-		nibblesThread.init(
-				savedInstanceState,
-				this,
-				(Settings.Values) getIntent().getSerializableExtra(
-						Settings.KEY_SETTINGS), this);
+		nibblesThread.init(savedInstanceState, this);
 	}
 
 	@Override
@@ -44,10 +39,18 @@ public class NibblesActivity extends Activity implements GameOverListener {
 		super.onSaveInstanceState(outState);
 		nibblesThread.saveState(outState);
 	}
+	
+	private boolean finishOnBackPressed(int keyCode) {
+		boolean backPressed = (keyCode == KeyEvent.KEYCODE_BACK);
+		if (backPressed) {
+			finish();
+		}
+		return backPressed;
+	}
 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-		return nibblesThread.doKeyDown(keyCode);
+		return nibblesThread.doKeyDown(keyCode) || finishOnBackPressed(keyCode);
 	}
 
 	@Override

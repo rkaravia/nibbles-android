@@ -4,4 +4,8 @@
         <item quantity="one">%d Player</item>
         <item quantity="other">%d Players</item>
     </plurals>    
+    <plurals name="adversary">
+        <item quantity="one">%d Adversary</item>
+        <item quantity="other">%d Adversaries</item>
+    </plurals>    
 </resources>

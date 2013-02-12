@@ -13,7 +13,8 @@ public class Game implements Serializable {
 	private static final String TEXT_LAGGING = "LAGGING";
 	private static final Point P_LAGGING = new Point(35, 0);
 
-	private final int nPlayers;
+	private final int nHumans;
+	private final int nAI;
 	private final LogicTimer logicTimer;
 	private final Colors colorTable;
 
@@ -32,8 +33,9 @@ public class Game implements Serializable {
 
 	private Random rnd = new Random();
 
-	public Game(int nPlayers, int speed, boolean isMonochrome) {
-		this.nPlayers = nPlayers;
+	public Game(int nHumans, int nAI, int speed, boolean isMonochrome) {
+		this.nHumans = nHumans;
+		this.nAI = nAI;
 		colorTable = isMonochrome ? Colors.MONO : Colors.NORMAL;
 		logicTimer = new LogicTimer((1000 * 2) / (speed + 10));
 		initGame();
@@ -49,9 +51,9 @@ public class Game implements Serializable {
 		SoundSeq.init(speaker);
 	}
 
-	public void initAI(int... playerIds) {
-		for (int i = 0; i < playerIds.length; i++) {
-			snakeAIs.add(new SnakeAI(snakes[playerIds[i]], arena));
+	public void initAI() {
+		for (int i = 0; i < nAI; i++) {
+			snakeAIs.add(new SnakeAI(snakes[nHumans + i], arena));
 		}
 	}
 
@@ -71,7 +73,7 @@ public class Game implements Serializable {
 
 	private void moveSnakes() {
 		for (SnakeAI snakeAI : snakeAIs) {
-			snakeAI.stepASTAR(foodPosition);
+			snakeAI.step(foodPosition);
 		}
 		for (Snake snake : snakes) {
 			snake.prepareStep();
@@ -124,8 +126,8 @@ public class Game implements Serializable {
 
 	private void initGame() {
 		arena = new Arena(colorTable, logicTimer);
-		snakes = new Snake[nPlayers];
-		for (int i = 0; i < nPlayers; i++) {
+		snakes = new Snake[nHumans + nAI];
+		for (int i = 0; i < snakes.length; i++) {
 			snakes[i] = new Snake(i, arena, colorTable);
 		}
 		for (Snake snake : snakes) {
@@ -142,19 +144,19 @@ public class Game implements Serializable {
 	}
 
 	public void addDirection(int snakeId, Point direction) {
-		if (snakeId < nPlayers) {
+		if (snakeId < nHumans) {
 			snakes[snakeId].direction().add(direction);
 		}
 	}
 
 	public void turnLeft(int snakeId) {
-		if (snakeId < nPlayers) {
+		if (snakeId < nHumans) {
 			snakes[snakeId].direction().turnLeft();
 		}
 	}
 
 	public void turnRight(int snakeId) {
-		if (snakeId < nPlayers) {
+		if (snakeId < nHumans) {
 			snakes[snakeId].direction().turnRight();
 		}
 	}

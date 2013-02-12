@@ -7,16 +7,17 @@ import nibbles.settings.Settings;
 import nibbles.ui.R;
 
 import nibbles.game.Game;
-import nibbles.game.GameOverListener;
 import nibbles.game.Screen;
 import nibbles.game.Speaker;
 import nibbles.game.SoundSeq.FreqDuration;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.SurfaceHolder;
@@ -53,25 +54,34 @@ public class NibblesThread extends Thread {
 		this.surfaceHolder = surfaceHolder;
 		this.context = context;
 	}
+	
+	private int getIntPref(SharedPreferences prefs, String key) {
+		return Integer.parseInt(prefs.getString(key, ""));
+	}
+	
+	private void newGame() {
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(nibblesActivity);
+		int speed = getIntPref(prefs, Settings.KEY_PREF_SPEED);
+		int nHumans = getIntPref(prefs, Settings.KEY_PREF_HUMAN_PLAYERS);
+		int nAI = getIntPref(prefs, Settings.KEY_PREF_ADVERSARIES);
+		boolean isMonochrome = prefs.getBoolean(Settings.KEY_PREF_MONOCHROME, false);
+		nibblesGame =  new Game(nHumans, nAI, speed, isMonochrome);
+	}
 
 	public void init(Bundle savedInstanceState,
-			NibblesActivity nibblesActivity, Settings.Values settings,
-			GameOverListener gameOverListener) {
+			NibblesActivity nibblesActivity) {
 		this.nibblesActivity = nibblesActivity;
-		int nPlayers = settings.getnPlayers();
 		if (savedInstanceState == null) {
-			nibblesGame = new Game(nPlayers, 20, settings.isMonochrome());
+			newGame();
 		} else {
 			Log.v(TAG, "Restore");
 			nibblesGame = (Game) savedInstanceState
 					.getSerializable(KEY_NIBBLES_GAME);
 			speaker.setMuted(savedInstanceState.getBoolean(KEY_MUTED));
 		}
-		nibblesGame.setGameOverListener(gameOverListener);
+		nibblesGame.setGameOverListener(nibblesActivity);
 		nibblesGame.initSpeaker(speaker);
-		if (nPlayers == 2) {
-			nibblesGame.initAI(1);
-		}
+		nibblesGame.initAI();
 	}
 
 	private void doDraw(final Canvas canvas) {
