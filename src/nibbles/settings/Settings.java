@@ -13,6 +13,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public static final String KEY_PREF_SPEED = "pref_speed";
 	public static final String KEY_PREF_HUMAN_PLAYERS = "pref_human_players";
 	public static final String KEY_PREF_ADVERSARIES = "pref_adversaries";
+	public static final String KEY_PREF_SOUND = "pref_sound";
 	public static final String KEY_PREF_MONOCHROME = "pref_monochrome";
 	public static final String KEY_PREF_START = "pref_start";
 	

@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SoundSeq {
+	private static final int TUNE = 12; // tune 1 octave higher than original
 	private static final int BASE_FREQ = 110;
 	private static final double HALF_NOTE = Math.pow(2, 1.0 / 12.0);
-	private static final int TUNE = 12;
 
 	private static final SoundSeqElem[][] PREDEF = {
 			{ new Tempo(160), new Octave(2), new NoteLength(20),
@@ -135,44 +135,40 @@ public class SoundSeq {
 		public void execute(Params params, List<FreqDuration> result) {
 			int duration = 240 * 1000 / (params.getTempo() * params.getLength());
 			for (int i = 0; i < notes.length(); i++) {
-				int note = 0;
+				int note = -9 + 12 * (params.getOctave()) + TUNE;
 				switch (notes.charAt(i)) {
 				case 'A':
-					note = 9;
+					note += 9;
 					break;
 				case 'B':
-					note = 11;
+					note += 11;
 					break;
 				case 'C':
-					note = 0;
+					note += 0;
 					break;
 				case 'D':
-					note = 2;
+					note += 2;
 					break;
 				case 'E':
-					note = 4;
+					note += 4;
 					break;
 				case 'F':
-					note = 5;
+					note += 5;
 					break;
 				case 'G':
-					note = 7;
+					note += 7;
 					break;
 				}
-				int halfTone = 0;
 				if (i < notes.length() - 1) {
 					if (notes.charAt(i + 1) == '+') {
-						halfTone = 1;
+						note++;
 						i++;
 					} else if (notes.charAt(i + 1) == '-') {
-						halfTone = -1;
+						note--;
 						i++;
 					}
 				}
-				int noteId = (note - 9) + halfTone + 12 * (params.getOctave())
-						+ TUNE;
-				double frequency = BASE_FREQ * Math.pow(HALF_NOTE, noteId);
-
+				double frequency = BASE_FREQ * Math.pow(HALF_NOTE, note);
 				result.add(new FreqDuration(frequency, duration));
 			}
 		}

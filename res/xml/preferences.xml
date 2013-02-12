@@ -19,6 +19,11 @@
         android:title="@string/pref_adversaries" />
 
     <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="pref_sound"
+        android:title="@string/pref_sound" />
+
+    <CheckBoxPreference
         android:defaultValue="false"
         android:key="pref_monochrome"
         android:title="@string/pref_monochrome" />

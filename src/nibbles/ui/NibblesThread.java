@@ -66,6 +66,7 @@ public class NibblesThread extends Thread {
 		int nAI = getIntPref(prefs, Settings.KEY_PREF_ADVERSARIES);
 		boolean isMonochrome = prefs.getBoolean(Settings.KEY_PREF_MONOCHROME, false);
 		nibblesGame =  new Game(nHumans, nAI, speed, isMonochrome);
+		speaker.setMuted(!prefs.getBoolean(Settings.KEY_PREF_SOUND, true));
 	}
 
 	public void init(Bundle savedInstanceState,
