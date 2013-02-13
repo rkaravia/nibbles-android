@@ -8,6 +8,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 	public static final String KEY_PREF_SPEED = "pref_speed";
@@ -21,7 +22,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	private ListPreference nAdversariesPref;
 	private ListPreference speedPref;
 
-	private void initQuantityChoice(ListPreference pref, int quantity, int from, int to) {
+	private void initQuantityChoice(ListPreference pref, int quantity, int from, int to, int defaultValue) {
 		int nEntries = to - from + 1;
 		String[] values = new String[nEntries];
 		String[] entries = new String[nEntries];
@@ -32,17 +33,17 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		}
 		pref.setEntryValues(values);
 		pref.setEntries(entries);
-		pref.setDefaultValue(values[0]);
+		pref.setValue(Integer.toString(defaultValue));
 		updateSummary(pref);
 	}
 	
 	@SuppressWarnings("deprecation")
 	private void initPrefs() {
 		nPlayersPref = (ListPreference) findPreference(KEY_PREF_HUMAN_PLAYERS);
-		initQuantityChoice(nPlayersPref, R.plurals.player, 1, 2); //TODO outsource constants 1, 2
+		initQuantityChoice(nPlayersPref, R.plurals.player, 1, 2, 1); //TODO outsource constants 1, 2, 1
 		
 		nAdversariesPref = (ListPreference) findPreference(KEY_PREF_ADVERSARIES);
-		initQuantityChoice(nAdversariesPref, R.plurals.adversary, 0, 2); //TODO outsource constants 0, 2
+		initQuantityChoice(nAdversariesPref, R.plurals.adversary, 0, 2, 1); //TODO outsource constants 0, 2, 1
 		
 		speedPref = (ListPreference) findPreference(KEY_PREF_SPEED);
 		updateSummary(speedPref);
