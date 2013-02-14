@@ -184,7 +184,7 @@ public class NibblesThread extends Thread {
 		if (x >= 2.0 / 3.0) {
 			nibblesGame.turnRight(0);
 		} else if (x >= 1.0 / 3.0) {
-			nibblesGame.toggleState();
+			nibblesGame.pushSpace();
 		} else {
 			nibblesGame.turnLeft(0);
 		}
@@ -208,7 +208,7 @@ public class NibblesThread extends Thread {
 				setMuted(!speaker.isMuted());
 				break;
 			case KeyEvent.KEYCODE_DPAD_CENTER:
-				nibblesGame.toggleState();
+				nibblesGame.pushSpace();
 				break;
 			default:
 				return false;

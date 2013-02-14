@@ -12,6 +12,13 @@ abstract public class Screen {
 	private static final int UPPER_PART_HEIGHT = 7;
 	// private static final int LOWERPIXELHEIGHT = 9;
 
+	private static final int NOTIFICATION_MAXLENGTH = 29;
+	private static final Point NOTIFICATION_FRAME_P1 = new Point(23, 20);
+	private static final Point NOTIFICATION_FRAME_P2 = new Point(55, 25);
+	private static final Point NOTIFICATION_BG_P1 = new Point(24, 21);
+	private static final Point NOTIFICATION_BG_P2 = new Point(54, 24);
+	private static final Point NOTIFICATION_TEXT = new Point(25, 22);
+
 	private static final int[] QB_COLORS = { Color.rgb(0, 0, 0),
 			Color.rgb(0, 0, 168), Color.rgb(0, 168, 0), Color.rgb(0, 168, 168),
 			Color.rgb(168, 0, 0), Color.rgb(168, 0, 168),
@@ -40,7 +47,7 @@ abstract public class Screen {
 	public void draw(Point p, int qbColor) {
 		draw(p, p, qbColor);
 	}
-	
+
 	public void draw(Point p, int qbColor, float alpha) {
 		draw(p, p, qbColor, alpha);
 	}
@@ -48,7 +55,7 @@ abstract public class Screen {
 	public void draw(Point p1, Point p2, int qbColor) {
 		draw(p1, p2, qbColor, 1);
 	}
-	
+
 	public void draw(Point p1, Point p2, int qbColor, float alpha) {
 		int left = Math.min(p1.getX(), p2.getX());
 		int top = Math.min(p1.getY(), p2.getY());
@@ -58,7 +65,8 @@ abstract public class Screen {
 		p1 = toPixelCoordinates(left, top);
 		p2 = toPixelCoordinates(right, bottom);
 
-		drawRect(p1.getX(), p1.getY(), p2.getX(), p2.getY(), qb2rgb(qbColor), alpha);
+		drawRect(p1.getX(), p1.getY(), p2.getX(), p2.getY(), qb2rgb(qbColor),
+				alpha);
 	}
 
 	public void write(String text, Point p, int color) {
@@ -66,5 +74,12 @@ abstract public class Screen {
 			Point p0 = toPixelCoordinates(p.getX() + i, p.getY());
 			writeChar(text.charAt(i), p0.getX(), p0.getY(), qb2rgb(color));
 		}
+	}
+
+	public void notification(String text, int fg, int bg) {
+		draw(NOTIFICATION_FRAME_P1, NOTIFICATION_FRAME_P2, fg);
+		draw(NOTIFICATION_BG_P1, NOTIFICATION_BG_P2, bg);
+		int paddedLength = text.length() + (Screen.NOTIFICATION_MAXLENGTH - text.length() + 1) / 2;
+		write(String.format("%" + paddedLength + "s", text), NOTIFICATION_TEXT, fg);
 	}
 }

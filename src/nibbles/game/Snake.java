@@ -13,10 +13,12 @@ public class Snake implements Serializable {
 	public static final int DEATH_DEDUCTION = 10;
 
 	private static final SnakeData[] SNAKE_DATA = {
-			new SnakeData("SAMMY", "%1$s-->  Lives: %2$1d     %3$9d",
-					new Point(48, 0)),
-			new SnakeData("JAKE", "%3$9d  Lives: %2$1d  <--%1$s", new Point(0,
-					0)) };
+			new SnakeData("Sammy", "%1$s-->  Lives: %2$1d     %3$9d",
+					new Point(48, 0), "%s Dies! Push Space! --->"),
+			new SnakeData("Jake", "%3$9d  Lives: %2$1d  <--%1$s", new Point(0,
+					0), "<--- %s Dies! Push Space!"),
+			new SnakeData("Alice", null, null, "%s Dies! Push Space!"),
+			new SnakeData("Bob", null, null, "%s Dies! Push Space!") };
 
 	private final int id;
 	private final Arena arena;
@@ -50,11 +52,14 @@ public class Snake implements Serializable {
 		private final String name;
 		private final String format;
 		private final Point infoLocation;
+		private final String deathNotification;
 
-		public SnakeData(String name, String format, Point infoLocation) {
+		public SnakeData(String name, String format, Point infoLocation,
+				String deathNotification) {
 			this.name = name;
 			this.format = format;
 			this.infoLocation = infoLocation;
+			this.deathNotification = deathNotification;
 		}
 
 		public String getName() {
@@ -67,6 +72,10 @@ public class Snake implements Serializable {
 
 		public Point getInfoLocation() {
 			return infoLocation;
+		}
+
+		public String getDeathNotification() {
+			return deathNotification;
 		}
 	}
 
@@ -102,7 +111,7 @@ public class Snake implements Serializable {
 		public synchronized Point get() {
 			return buffer.getFirst();
 		}
-		
+
 		private synchronized void init(Point direction) {
 			buffer.clear();
 			buffer.add(direction);
@@ -191,9 +200,9 @@ public class Snake implements Serializable {
 			screen.draw(sisterPoint, arena.getColor(sisterPoint));
 		}
 
-		if (id < SNAKE_DATA.length) {
+		if (SNAKE_DATA[id].getFormat() != null) {
 			String info = String.format(SNAKE_DATA[id].getFormat(),
-					SNAKE_DATA[id].getName(), nLives, score * 100);
+					SNAKE_DATA[id].getName().toUpperCase(Locale.US), nLives, score * 100);
 			Point infoLocation = SNAKE_DATA[id].getInfoLocation();
 			screen.write(info, infoLocation, textColor);
 		}
@@ -205,5 +214,9 @@ public class Snake implements Serializable {
 
 	public byte getColor() {
 		return color;
+	}
+
+	public String getDeathNotification() {
+		return String.format(SNAKE_DATA[id].getDeathNotification(), SNAKE_DATA[id].getName());
 	}
 }

@@ -12,6 +12,8 @@ public class Game implements Serializable {
 
 	private static final String TEXT_LAGGING = "LAGGING";
 	private static final Point P_LAGGING = new Point(35, 0);
+	private static final String LEVEL_NOTIFICATION = "Level %d,  Push Space";
+	private static final String PAUSED_NOTIFICATION = "Game Paused ... Push Space";
 
 	private final int nHumans;
 	private final int nAI;
@@ -19,7 +21,9 @@ public class Game implements Serializable {
 	private final Colors colorTable;
 
 	private int nLevel = 0;
+	private boolean startLevelSound = true;
 	private boolean gameOver = false;
+	private boolean notificationChanged = false;  //TODO thread safety
 
 	private Arena arena;
 	private Snake[] snakes;
@@ -29,7 +33,7 @@ public class Game implements Serializable {
 
 	private int foodNumber;
 	private Point foodPosition;
-	private boolean startLevelSound;
+	private LinkedList<String> notifications = new LinkedList<String>();
 
 	private Random rnd = new Random();
 
@@ -39,7 +43,7 @@ public class Game implements Serializable {
 		colorTable = isMonochrome ? Colors.MONO : Colors.NORMAL;
 		logicTimer = new LogicTimer((1000 * 2) / (speed + 10));
 		initGame();
-		restartLevel();
+		startLevel(true);
 	}
 
 	public void setGameOverListener(GameOverListener gameOverListener) {
@@ -66,6 +70,10 @@ public class Game implements Serializable {
 				speaker.playSoundSeq(SoundSeq.START_ROUND);
 			}
 			moveSnakes();
+			return true;
+		} else if (notificationChanged) {
+			notificationChanged = false;
+			return true;
 		}
 
 		return nextBeat;
@@ -87,6 +95,8 @@ public class Game implements Serializable {
 				speaker.playSoundSeq(SoundSeq.HIT_NUMBER);
 			}
 			if (!snake.step(snakes)) {
+				notifications.add(snake.getDeathNotification());
+				notificationChanged = true;
 				snakeLostLife = true;
 				gameOver = gameOver || (snake.getNLives() == 0);
 			}
@@ -94,7 +104,7 @@ public class Game implements Serializable {
 		if (snakeLostLife) {
 			speaker.playSoundSeq(SoundSeq.DEATH);
 			if (gameOver) {
-				pause();
+				logicTimer.pause();
 				gameOverListener.gameOver();
 			} else {
 				restartLevel();
@@ -102,15 +112,19 @@ public class Game implements Serializable {
 		} else if (snakeAte) {
 			if (foodNumber == MAX_FOOD_NUMBER) {
 				nLevel++;
-				startLevel();
+				startLevel(true);
 			} else {
 				nextFood();
 			}
 		}
 	}
 
-	private void startLevel() {
-		pause();
+	private void startLevel(boolean showNotification) {
+		logicTimer.pause();
+		if (showNotification) {
+			notifications.add(String.format(LEVEL_NOTIFICATION, nLevel + 1));
+			notificationChanged = true;
+		}
 		arena.setLevel(nLevel);
 		for (Snake snake : snakes) {
 			snake.startLevel(Level.get(nLevel));
@@ -120,7 +134,7 @@ public class Game implements Serializable {
 	}
 
 	private void restartLevel() {
-		startLevel();
+		startLevel(false);
 		startLevelSound = true;
 	}
 
@@ -175,21 +189,35 @@ public class Game implements Serializable {
 			screen.write(TEXT_LAGGING, P_LAGGING,
 					colorTable.get(ColorKey.DIALOG_FG));
 		}
+		
+		if (!notifications.isEmpty()) {
+			screen.notification(notifications.getFirst(), colorTable.get(ColorKey.DIALOG_FG), colorTable.get(ColorKey.DIALOG_BG));
+		}
 	}
 
-	public void toggleState() {
-		if (logicTimer.isPaused()) {
-			unpause();
-		} else {
-			pause();
+	public void pushSpace() {
+		if (!notifications.isEmpty()) {
+			notifications.removeFirst();
+			notificationChanged = true;
+		}
+		if (notifications.isEmpty()) {
+			if (logicTimer.isPaused()) {
+				unpause();
+			} else {
+				pause();
+			}
 		}
 	}
 
 	public void pause() {
-		logicTimer.pause();
+		if (!logicTimer.isPaused()) {
+			logicTimer.pause();
+			notifications.add(PAUSED_NOTIFICATION);
+			notificationChanged = true;
+		}
 	}
 
-	public void unpause() {
+	private void unpause() {
 		if (!gameOver) {
 			for (Snake snake : snakes) {
 				snake.direction().reset();

@@ -13,8 +13,8 @@ public class Level {
 				new Point[]{
 						new Point(49, 24),
 						new Point(29, 24),
-						new Point(39, 21),
-						new Point(39, 27),
+						new Point(39, 20),
+						new Point(39, 28),
 				},
 				new Point[]{
 						Point.RIGHT,
@@ -173,9 +173,9 @@ public class Level {
 		new Level(	//Level 9
 				new Point[]{
 						new Point(74, 39),
-						new Point(4, 14),
-						new Point(42, 6),
-						new Point(36, 46),
+						new Point(5, 14),
+						new Point(42, 5),
+						new Point(37, 46),
 				},
 				new Point[]{
 						Point.UP,
