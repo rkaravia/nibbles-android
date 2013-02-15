@@ -12,8 +12,9 @@ public class Game implements Serializable {
 
 	private static final String TEXT_LAGGING = "LAGGING";
 	private static final Point P_LAGGING = new Point(35, 0);
-	private static final String LEVEL_NOTIFICATION = "Level %d,  Push Space";
-	private static final String PAUSED_NOTIFICATION = "Game Paused ... Push Space";
+	private static final String NOTIFICATION_LEVEL_N = "Level %d,  Push Space";
+	private static final String NOTIFICATION_PAUSED = "Game Paused ... Push Space";
+	private static final String NOTIFICATION_GAME_OVER = "Game Over";
 
 	private final int nHumans;
 	private final int nAI;
@@ -23,11 +24,13 @@ public class Game implements Serializable {
 	private int nLevel = 0;
 	private boolean startLevelSound = true;
 	private boolean gameOver = false;
-	private boolean notificationChanged = false;  //TODO thread safety
+	private boolean notificationChanged = false;
+	private boolean initialized = false;
 
 	private Arena arena;
 	private Snake[] snakes;
-	transient private List<SnakeAI> snakeAIs = new ArrayList<SnakeAI>();
+
+	transient private List<SnakeAI> snakeAIs;;
 	transient private Speaker speaker;
 	transient private GameOverListener gameOverListener;
 
@@ -46,37 +49,36 @@ public class Game implements Serializable {
 		startLevel(true);
 	}
 
-	public void setGameOverListener(GameOverListener gameOverListener) {
+	public synchronized void init(GameOverListener gameOverListener,
+			Speaker speaker) {
 		this.gameOverListener = gameOverListener;
-	}
-
-	public void initSpeaker(Speaker speaker) {
 		this.speaker = speaker;
 		SoundSeq.init(speaker);
-	}
-
-	public void initAI() {
+		snakeAIs = new ArrayList<SnakeAI>();
 		for (int i = 0; i < nAI; i++) {
 			snakeAIs.add(new SnakeAI(snakes[nHumans + i], arena));
 		}
+		initialized = true;
 	}
 
-	public boolean step() {
-		boolean nextBeat = logicTimer.step();
-
-		if (nextBeat) {
-			if (startLevelSound) {
-				startLevelSound = false;
-				speaker.playSoundSeq(SoundSeq.START_ROUND);
+	public synchronized boolean step() {
+		if (initialized) {
+			if (logicTimer.step()) {
+				if (startLevelSound) {
+					startLevelSound = false;
+					speaker.playSoundSeq(SoundSeq.START_ROUND);
+				}
+				moveSnakes();
+				return true;
+			} else if (notificationChanged) {
+				notificationChanged = false;
+				return true;
+			} else {
+				return false;
 			}
-			moveSnakes();
-			return true;
-		} else if (notificationChanged) {
-			notificationChanged = false;
-			return true;
+		} else {
+			return false;
 		}
-
-		return nextBeat;
 	}
 
 	private void moveSnakes() {
@@ -95,8 +97,7 @@ public class Game implements Serializable {
 				speaker.playSoundSeq(SoundSeq.HIT_NUMBER);
 			}
 			if (!snake.step(snakes)) {
-				notifications.add(snake.getDeathNotification());
-				notificationChanged = true;
+				addNotification(snake.getDeathNotification());
 				snakeLostLife = true;
 				gameOver = gameOver || (snake.getNLives() == 0);
 			}
@@ -105,6 +106,8 @@ public class Game implements Serializable {
 			speaker.playSoundSeq(SoundSeq.DEATH);
 			if (gameOver) {
 				logicTimer.pause();
+				notifications.clear();
+				addNotification(NOTIFICATION_GAME_OVER);
 				gameOverListener.gameOver();
 			} else {
 				restartLevel();
@@ -119,11 +122,15 @@ public class Game implements Serializable {
 		}
 	}
 
+	private void addNotification(String notification) {
+		notifications.add(notification);
+		notificationChanged = true;
+	}
+
 	private void startLevel(boolean showNotification) {
 		logicTimer.pause();
 		if (showNotification) {
-			notifications.add(String.format(LEVEL_NOTIFICATION, nLevel + 1));
-			notificationChanged = true;
+			addNotification(String.format(NOTIFICATION_LEVEL_N, nLevel + 1));
 		}
 		arena.setLevel(nLevel);
 		for (Snake snake : snakes) {
@@ -157,25 +164,25 @@ public class Game implements Serializable {
 		} while (!arena.placeFood(foodPosition));
 	}
 
-	public void addDirection(int snakeId, Point direction) {
+	public synchronized void addDirection(int snakeId, Point direction) {
 		if (snakeId < nHumans) {
 			snakes[snakeId].direction().add(direction);
 		}
 	}
 
-	public void turnLeft(int snakeId) {
+	public synchronized void turnLeft(int snakeId) {
 		if (snakeId < nHumans) {
 			snakes[snakeId].direction().turnLeft();
 		}
 	}
 
-	public void turnRight(int snakeId) {
+	public synchronized void turnRight(int snakeId) {
 		if (snakeId < nHumans) {
 			snakes[snakeId].direction().turnRight();
 		}
 	}
 
-	public void draw(Screen screen) {
+	public synchronized void draw(Screen screen) {
 		arena.draw(screen);
 		for (Snake snake : snakes) {
 			snake.draw(screen, colorTable.get(ColorKey.DIALOG_FG));
@@ -189,40 +196,41 @@ public class Game implements Serializable {
 			screen.write(TEXT_LAGGING, P_LAGGING,
 					colorTable.get(ColorKey.DIALOG_FG));
 		}
-		
+
 		if (!notifications.isEmpty()) {
-			screen.notification(notifications.getFirst(), colorTable.get(ColorKey.DIALOG_FG), colorTable.get(ColorKey.DIALOG_BG));
+			screen.notification(notifications.getFirst(),
+					colorTable.get(ColorKey.DIALOG_FG),
+					colorTable.get(ColorKey.DIALOG_BG));
 		}
 	}
 
-	public void pushSpace() {
-		if (!notifications.isEmpty()) {
-			notifications.removeFirst();
-			notificationChanged = true;
-		}
-		if (notifications.isEmpty()) {
-			if (logicTimer.isPaused()) {
-				unpause();
-			} else {
-				pause();
+	public synchronized void pushSpace() {
+		if (!gameOver) {
+			if (notifications.poll() != null) {
+				notificationChanged = true;
+			}
+			if (notifications.isEmpty()) {
+				if (logicTimer.isPaused()) {
+					unpause();
+				} else {
+					pause();
+				}
 			}
 		}
 	}
 
-	public void pause() {
+	public synchronized void pause() {
 		if (!logicTimer.isPaused()) {
 			logicTimer.pause();
-			notifications.add(PAUSED_NOTIFICATION);
-			notificationChanged = true;
+			addNotification(NOTIFICATION_PAUSED);
 		}
 	}
 
-	private void unpause() {
-		if (!gameOver) {
-			for (Snake snake : snakes) {
-				snake.direction().reset();
-			}
-			logicTimer.start();
+	private synchronized void unpause() {
+		for (Snake snake : snakes) {
+			snake.direction().reset();
 		}
+		logicTimer.start();
+
 	}
 }

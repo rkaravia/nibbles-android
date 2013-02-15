@@ -1,14 +1,18 @@
 package nibbles.ui;
 
 import nibbles.game.GameOverListener;
+import nibbles.settings.Settings;
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.Window;
 import android.view.WindowManager;
 
 public class NibblesActivity extends Activity implements GameOverListener {
+	private static final long GAME_OVER_WAIT = 5000;
 	private NibblesView nibblesView;
 	private NibblesThread nibblesThread;
 
@@ -25,6 +29,9 @@ public class NibblesActivity extends Activity implements GameOverListener {
 		setContentView(R.layout.nibbles_running);
 		nibblesView = (NibblesView) findViewById(R.id.nibbles);
 		nibblesThread = nibblesView.getThread();
+		if (savedInstanceState == null) {
+			savedInstanceState = Settings.SAVED_STATE;
+		}
 		nibblesThread.init(savedInstanceState, this);
 	}
 
@@ -43,6 +50,12 @@ public class NibblesActivity extends Activity implements GameOverListener {
 	private boolean finishOnBackPressed(int keyCode) {
 		boolean backPressed = (keyCode == KeyEvent.KEYCODE_BACK);
 		if (backPressed) {
+			nibblesThread.doPause();
+			Bundle data = new Bundle();
+			nibblesThread.saveState(data);
+			Intent result = new Intent();
+			result.putExtras(data);
+			setResult(RESULT_OK, result);
 			finish();
 		}
 		return backPressed;
@@ -61,6 +74,12 @@ public class NibblesActivity extends Activity implements GameOverListener {
 
 	@Override
 	public void gameOver() {
-		finish();
+		new Thread() {
+			@Override
+			public void run() {
+				SystemClock.sleep(GAME_OVER_WAIT);
+				finish();
+			}
+		}.start();
 	}
 }

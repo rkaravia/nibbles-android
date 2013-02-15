@@ -84,23 +84,23 @@ public class Snake implements Serializable {
 
 		private final LinkedList<Point> buffer = new LinkedList<Point>();
 
-		public synchronized void reset() {
+		public void reset() {
 			init(get());
 		}
 
-		public synchronized void turnLeft() {
+		public void turnLeft() {
 			if (!buffer.isEmpty()) {
 				buffer.add(buffer.getLast().rotateLeft());
 			}
 		}
 
-		public synchronized void turnRight() {
+		public void turnRight() {
 			if (!buffer.isEmpty()) {
 				buffer.add(buffer.getLast().rotateRight());
 			}
 		}
 
-		public synchronized void add(Point direction) {
+		public void add(Point direction) {
 			if (buffer.isEmpty()
 					|| !direction.absValues().equals(
 							buffer.getLast().absValues())) {
@@ -108,16 +108,16 @@ public class Snake implements Serializable {
 			}
 		}
 
-		public synchronized Point get() {
+		public Point get() {
 			return buffer.getFirst();
 		}
 
-		private synchronized void init(Point direction) {
+		private void init(Point direction) {
 			buffer.clear();
 			buffer.add(direction);
 		}
 
-		private synchronized void update() {
+		private void update() {
 			if (buffer.size() > 1) {
 				buffer.removeFirst();
 			}
@@ -136,7 +136,7 @@ public class Snake implements Serializable {
 		addBodyPart(headPosition);
 	}
 
-	public synchronized void prepareStep() {
+	public void prepareStep() {
 		directionBuffer.update();
 		headPosition = body.getLast().add(directionBuffer.get());
 	}

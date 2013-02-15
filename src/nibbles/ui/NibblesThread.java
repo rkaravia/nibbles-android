@@ -23,8 +23,8 @@ import android.view.KeyEvent;
 import android.view.SurfaceHolder;
 
 public class NibblesThread extends Thread {
-	private static final String KEY_NIBBLES_GAME = "NibblesGame";
-	private static final String KEY_MUTED = "Muted";
+	private static final String KEY_NIBBLES_GAME = "nibbles.ui.NibblesThread.NibblesGame";
+	private static final String KEY_MUTED = "nibbles.ui.NibblesThread.Muted";
 
 	private static final String TAG = "NT";
 
@@ -36,6 +36,7 @@ public class NibblesThread extends Thread {
 	private Game nibblesGame;
 	private AsciiCharWriter asciiWriter;
 	private final List<PlaySeq> playSeqPool = new ArrayList<PlaySeq>();
+	volatile private boolean initialized = false;
 
 	private final Speaker speaker = new Speaker() {
 		@Override
@@ -80,9 +81,8 @@ public class NibblesThread extends Thread {
 					.getSerializable(KEY_NIBBLES_GAME);
 			speaker.setMuted(savedInstanceState.getBoolean(KEY_MUTED));
 		}
-		nibblesGame.setGameOverListener(nibblesActivity);
-		nibblesGame.initSpeaker(speaker);
-		nibblesGame.initAI();
+		nibblesGame.init(nibblesActivity, speaker);
+		initialized = true;
 	}
 
 	private void doDraw(final Canvas canvas) {
@@ -148,15 +148,17 @@ public class NibblesThread extends Thread {
 	}
 
 	private void reDraw() {
-		Canvas c = null;
-		try {
-			c = surfaceHolder.lockCanvas();
-			synchronized (surfaceHolder) {
-				doDraw(c);
-			}
-		} finally {
-			if (c != null) {
-				surfaceHolder.unlockCanvasAndPost(c);
+		if (initialized) {
+			Canvas c = null;
+			try {
+				c = surfaceHolder.lockCanvas();
+				synchronized (surfaceHolder) {
+					doDraw(c);
+				}
+			} finally {
+				if (c != null) {
+					surfaceHolder.unlockCanvasAndPost(c);
+				}
 			}
 		}
 	}
@@ -166,9 +168,8 @@ public class NibblesThread extends Thread {
 		while (true) {
 			waitForSurface();
 			reDraw();
-			// TODO check if nibblesGame is null?
 			while (running) {
-				if (nibblesGame.step()) {
+				if (initialized && nibblesGame.step()) {
 					reDraw();
 				}
 			}
@@ -181,45 +182,52 @@ public class NibblesThread extends Thread {
 	}
 
 	public void doTouch(float x) {
-		if (x >= 2.0 / 3.0) {
-			nibblesGame.turnRight(0);
-		} else if (x >= 1.0 / 3.0) {
-			nibblesGame.pushSpace();
-		} else {
-			nibblesGame.turnLeft(0);
+		if (initialized) {
+			if (x >= 2.0 / 3.0) {
+				nibblesGame.turnRight(0);
+			} else if (x >= 1.0 / 3.0) {
+				nibblesGame.pushSpace();
+			} else {
+				nibblesGame.turnLeft(0);
+			}
 		}
 	}
 
 	public boolean doKeyDown(int keyCode) {
-		KeyMapper.SnakeEvent snakeEvent = KeyMapper.STANDARD_MAPPER
-				.map(keyCode);
-		if (snakeEvent != null) {
-			nibblesGame.addDirection(snakeEvent.getSnakeId(),
-					snakeEvent.getDirection());
-		} else {
-			switch (keyCode) {
-			case KeyEvent.KEYCODE_VOLUME_DOWN:
-				setMuted(true);
-				break;
-			case KeyEvent.KEYCODE_VOLUME_UP:
-				setMuted(false);
-				break;
-			case KeyEvent.KEYCODE_MUTE:
-				setMuted(!speaker.isMuted());
-				break;
-			case KeyEvent.KEYCODE_DPAD_CENTER:
-				nibblesGame.pushSpace();
-				break;
-			default:
-				return false;
+		if (initialized) {
+			KeyMapper.SnakeEvent snakeEvent = KeyMapper.STANDARD_MAPPER
+					.map(keyCode);
+			if (snakeEvent != null) {
+				nibblesGame.addDirection(snakeEvent.getSnakeId(),
+						snakeEvent.getDirection());
+			} else {
+				switch (keyCode) {
+				case KeyEvent.KEYCODE_VOLUME_DOWN:
+					setMuted(true);
+					break;
+				case KeyEvent.KEYCODE_VOLUME_UP:
+					setMuted(false);
+					break;
+				case KeyEvent.KEYCODE_MUTE:
+					setMuted(!speaker.isMuted());
+					break;
+				case KeyEvent.KEYCODE_DPAD_CENTER:
+				case KeyEvent.KEYCODE_SPACE:
+					nibblesGame.pushSpace();
+					break;
+				default:
+					return false;
+				}
 			}
+			return true;
+		} else {
+			return false;
 		}
-		return true;
 	}
 
 	private void setMuted(boolean muted) {
 		speaker.setMuted(muted);
-		if (nibblesActivity != null) {
+		if (initialized) {
 			int viewId;
 			if (muted) {
 				viewId = R.id.muteImage;
@@ -231,7 +239,9 @@ public class NibblesThread extends Thread {
 	}
 
 	public void doPause() {
-		nibblesGame.pause();
+		if (initialized) {
+			nibblesGame.pause();
+		}
 	}
 
 	public void saveState(Bundle outState) {
