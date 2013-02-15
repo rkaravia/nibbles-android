@@ -2,6 +2,7 @@ package nibbles.settings;
 
 import nibbles.ui.NibblesActivity;
 import nibbles.ui.R;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -10,8 +11,12 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceScreen;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
+	public static final String KEY_PREF_NEW_GAME = "pref_new_game";
+	public static final String KEY_PREF_CONTINUE = "pref_continue";
+	
 	public static final String KEY_PREF_SPEED = "pref_speed";
 	public static final String KEY_PREF_HUMAN_PLAYERS = "pref_human_players";
 	public static final String KEY_PREF_ADVERSARIES = "pref_adversaries";
@@ -28,7 +33,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	private ListPreference nAdversariesPref;
 	private ListPreference speedPref;
 	
-	public static Bundle SAVED_STATE;
+	private Bundle savedState;
 	
 	private static class QuantityChoice {
 		private final int from;
@@ -39,6 +44,25 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 			this.from = from;
 			this.to = to;
 			this.defaultValue = defaultValue;
+		}
+	}
+	
+	private class Launcher implements OnPreferenceClickListener {
+		private final boolean useSavedState;
+
+		private Launcher(boolean useSavedState) {
+			this.useSavedState = useSavedState;
+		}
+
+		@Override
+		public boolean onPreferenceClick(Preference preference) {
+			Intent intent = new Intent(Settings.this, NibblesActivity.class);
+			if (useSavedState) {
+				intent.putExtras(savedState);
+				savedState = null;
+			}
+			startActivityForResult(intent, REQUEST_CODE);
+			return true;
 		}
 	}
 
@@ -68,13 +92,17 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		speedPref = (ListPreference) findPreference(KEY_PREF_SPEED);
 		updateSummary(speedPref);
 		
-		findPreference(KEY_PREF_START).setOnPreferenceClickListener(new OnPreferenceClickListener() {
-			@Override
-			public boolean onPreferenceClick(Preference preference) {
-				startActivityForResult(new Intent(Settings.this, NibblesActivity.class), REQUEST_CODE);
-				return true;
-			}
-		});
+		updateContinueButton();
+		
+		findPreference(KEY_PREF_CONTINUE).setOnPreferenceClickListener(new Launcher(true));
+		findPreference(KEY_PREF_START).setOnPreferenceClickListener(new Launcher(false));
+		
+        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+	}
+	
+	@SuppressWarnings("deprecation")
+	private void updateContinueButton() {
+		findPreference(KEY_PREF_CONTINUE).setEnabled(savedState != null);
 	}
 	
     @SuppressWarnings("deprecation")
@@ -83,7 +111,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
         initPrefs();
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
     
     private void updateSummary(ListPreference pref) {
@@ -102,10 +129,17 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode == RESULT_OK) {
-			SAVED_STATE = data.getExtras();
+			savedState = data.getExtras();
+			PreferenceScreen newGameScreen = (PreferenceScreen) getPreferenceScreen().findPreference(KEY_PREF_NEW_GAME);
+			Dialog dialog = newGameScreen.getDialog();
+			if (dialog != null) {
+				dialog.dismiss();
+			}
+			updateContinueButton();
 		}
 	}
 }

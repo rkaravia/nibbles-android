@@ -1,35 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     android:title="@string/app_name" >
-
-    <ListPreference
-        android:defaultValue="@string/pref_speed_default"
-        android:dialogTitle="@string/pref_speed"
-        android:entries="@array/pref_speed_entries"
-        android:entryValues="@array/pref_speed_values"
-        android:key="pref_speed"
-        android:title="@string/pref_speed" />
-    <ListPreference
-        android:dialogTitle="@string/pref_human_players"
-        android:key="pref_human_players"
-        android:title="@string/pref_human_players" />
-    <ListPreference
-        android:dialogTitle="@string/pref_adversaries"
-        android:key="pref_adversaries"
-        android:title="@string/pref_adversaries" />
-
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="pref_sound"
-        android:title="@string/pref_sound" />
-
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="pref_monochrome"
-        android:title="@string/pref_monochrome" />
-
+    
     <Preference
-        android:key="pref_start"
-        android:title="@string/start" />
+            android:key="pref_continue"
+            android:title="@string/pref_continue" />
+
+    <PreferenceScreen
+        android:key="pref_new_game"
+        android:title="@string/pref_new_game" >
+        <ListPreference
+            android:defaultValue="@string/pref_speed_default"
+            android:dialogTitle="@string/pref_speed"
+            android:entries="@array/pref_speed_entries"
+            android:entryValues="@array/pref_speed_values"
+            android:key="pref_speed"
+            android:title="@string/pref_speed" />
+        <ListPreference
+            android:dialogTitle="@string/pref_human_players"
+            android:key="pref_human_players"
+            android:title="@string/pref_human_players" />
+        <ListPreference
+            android:dialogTitle="@string/pref_adversaries"
+            android:key="pref_adversaries"
+            android:title="@string/pref_adversaries" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="pref_sound"
+            android:title="@string/pref_sound" />
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref_monochrome"
+            android:title="@string/pref_monochrome" />
+
+        <Preference
+            android:key="pref_start"
+            android:title="@string/pref_start" />
+    </PreferenceScreen>
 
 </PreferenceScreen>
