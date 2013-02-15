@@ -30,7 +30,7 @@ public class Game implements Serializable {
 	private Arena arena;
 	private Snake[] snakes;
 
-	transient private List<SnakeAI> snakeAIs;;
+	transient private List<SnakeAI> snakeAIs;
 	transient private Speaker speaker;
 	transient private GameOverListener gameOverListener;
 
@@ -38,7 +38,7 @@ public class Game implements Serializable {
 	private Point foodPosition;
 	private LinkedList<String> notifications = new LinkedList<String>();
 
-	private Random rnd = new Random();
+	private final Random rnd = new Random();
 
 	public Game(int nHumans, int nAI, int speed, boolean isMonochrome) {
 		this.nHumans = nHumans;
@@ -82,11 +82,12 @@ public class Game implements Serializable {
 	}
 
 	private void moveSnakes() {
-		for (SnakeAI snakeAI : snakeAIs) {
-			snakeAI.step(foodPosition);
+		ArrayList<Point> snakeHeads = new ArrayList<Point>(nHumans + nAI);
+		for (int i = 0; i < nHumans; i++) {
+			snakeHeads.add(snakes[i].prepareStep());
 		}
-		for (Snake snake : snakes) {
-			snake.prepareStep();
+		for (int i = 0; i < nAI; i++) {
+			snakeHeads.add(snakeAIs.get(i).step(foodPosition, snakeHeads.toArray(new Point[snakeHeads.size()])));
 		}
 
 		boolean snakeLostLife = false;

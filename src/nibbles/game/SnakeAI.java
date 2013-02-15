@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.PriorityQueue;
+import java.util.Random;
 
 import nibbles.game.Snake.DirectionBuffer;
 
@@ -28,6 +29,10 @@ public class SnakeAI implements Serializable {
 			});
 
 	private static final int DST_UNKNOWN = -1;
+	
+	private final Random rnd = new Random();
+
+	private Point[] otherSnakeHeads;
 
 	public SnakeAI(Snake snake, Arena arena) {
 		this.snake = snake;
@@ -48,6 +53,19 @@ public class SnakeAI implements Serializable {
 		queue.add(p);
 	}
 	
+	private boolean pointIsEmpty(Point p) {
+		if (arena.isEmpty(p)) {
+			for (Point other : otherSnakeHeads) {
+				if (p.equals(other)) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
 	private boolean AStar() {
 		while (!queue.isEmpty()) {
 			Point p = queue.poll();
@@ -57,7 +75,7 @@ public class SnakeAI implements Serializable {
 				if (cand.equals(head)) {
 					snake.direction().add(d.rotate180());
 					return true;
-				} else if (arena.isEmpty(cand)) {
+				} else if (pointIsEmpty(cand)) {
 					int candX = cand.getX();
 					int candY = cand.getY();
 					if (f[candX][candY] == DST_UNKNOWN) {
@@ -70,8 +88,9 @@ public class SnakeAI implements Serializable {
 		return false;
 	}
 
-	public void step(Point food) {
+	public Point step(Point food, Point[] otherSnakeHeads) {
 		head = snake.getHeadPosition();
+		this.otherSnakeHeads = otherSnakeHeads;
 		futureHead = head.add(snake.direction().get());
 		for (int x = 0; x < Arena.WIDTH; x++) {
 			Arrays.fill(f[x], DST_UNKNOWN);
@@ -82,20 +101,20 @@ public class SnakeAI implements Serializable {
 		if (!AStar()) {
 			survivalDirection();
 		}
+		return snake.prepareStep();
 	}
 
 	private void survivalDirection() {
-		// TODO random choice
 		DirectionBuffer dirBuffer = snake.direction();
 		HashSet<Point> possibleDirs = new HashSet<Point>();
 		for (Point d : Point.DIRECTIONS) {
-			if (arena.isEmpty(head.add(d))) {
+			if (pointIsEmpty(head.add(d))) {
 				possibleDirs.add(d);
 			}
 		}
 		if (!possibleDirs.isEmpty()
 				&& !possibleDirs.contains(dirBuffer.get())) {
-			dirBuffer.add((Point) possibleDirs.toArray()[0]);
+			dirBuffer.add((Point) possibleDirs.toArray()[rnd.nextInt(possibleDirs.size())]);
 		}
 	}
 

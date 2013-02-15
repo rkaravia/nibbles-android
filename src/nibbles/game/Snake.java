@@ -136,9 +136,10 @@ public class Snake implements Serializable {
 		addBodyPart(headPosition);
 	}
 
-	public void prepareStep() {
+	public Point prepareStep() {
 		directionBuffer.update();
 		headPosition = body.getLast().add(directionBuffer.get());
+		return headPosition;
 	}
 
 	public boolean step(Snake[] snakes) {
