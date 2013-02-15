@@ -59,8 +59,8 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 			Intent intent = new Intent(Settings.this, NibblesActivity.class);
 			if (useSavedState) {
 				intent.putExtras(savedState);
-				savedState = null;
 			}
+			savedState = null;
 			startActivityForResult(intent, REQUEST_CODE);
 			return true;
 		}
@@ -134,12 +134,12 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		if (resultCode == RESULT_OK) {
 			savedState = data.getExtras();
-			PreferenceScreen newGameScreen = (PreferenceScreen) getPreferenceScreen().findPreference(KEY_PREF_NEW_GAME);
-			Dialog dialog = newGameScreen.getDialog();
-			if (dialog != null) {
-				dialog.dismiss();
-			}
-			updateContinueButton();
 		}
+		PreferenceScreen newGameScreen = (PreferenceScreen) getPreferenceScreen().findPreference(KEY_PREF_NEW_GAME);
+		Dialog dialog = newGameScreen.getDialog();
+		if (dialog != null) {
+			dialog.dismiss();
+		}
+		updateContinueButton();
 	}
 }
