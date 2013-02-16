@@ -21,7 +21,7 @@ To build: Download or *git clone* this repository and import into the [Android S
 
 #### Steering the Snake
 
-* Hardware keys: Use directional pad or arrow keys to set direction.
+* Hardware keys: Use directional pad or arrow keys to set direction (Player 1). W, A, S, D (Player 2).
 * Touch screen: Tap left third of the screen to turn left, right third to turn right.
 
 #### Audio
@@ -30,4 +30,4 @@ Use volume down/up hardware keys to mute/unmute.
 
 #### Pause
 
-Press any other hardware key or tap the middle of the screen to pause.
+Press space or the center of the directional pad, or tap the middle of the screen to pause.

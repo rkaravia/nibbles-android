@@ -11,7 +11,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 public class NibblesActivity extends Activity implements GameOverListener {
-	private static final long GAME_OVER_WAIT = 5000;
+	private static final long GAME_OVER_WAIT = 3000;
 	private NibblesView nibblesView;
 	private NibblesThread nibblesThread;
 
