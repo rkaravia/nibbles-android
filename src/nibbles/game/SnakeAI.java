@@ -29,7 +29,7 @@ public class SnakeAI implements Serializable {
 			});
 
 	private static final int DST_UNKNOWN = -1;
-
+	
 	private final Random rnd = new Random();
 
 	private Point[] otherSnakeHeads;
@@ -49,10 +49,12 @@ public class SnakeAI implements Serializable {
 	}
 
 	private void setGoal(Point p) {
-		f[p.getX()][p.getY()] = h(p);
-		queue.add(p);
+		if (pointIsEmpty(p)) {
+			f[p.getX()][p.getY()] = h(p);
+			queue.add(p);
+		}
 	}
-
+	
 	private boolean pointIsEmpty(Point p) {
 		if (arena.isEmpty(p)) {
 			for (Point other : otherSnakeHeads) {
@@ -65,18 +67,17 @@ public class SnakeAI implements Serializable {
 			return false;
 		}
 	}
-
+	
 	private boolean AStar() {
 		while (!queue.isEmpty()) {
 			Point p = queue.poll();
 			int g = f[p.getX()][p.getY()] - h(p);
 			for (Point d : Point.DIRECTIONS) {
 				Point cand = p.add(d);
-				if (pointIsEmpty(cand)) {
-					if (cand.equals(head)) {
-						snake.direction().add(d.rotate180());
-						return true;
-					}
+				if (cand.equals(head)) {
+					snake.direction().add(d.rotate180());
+					return true;
+				} else if (pointIsEmpty(cand)) {
 					int candX = cand.getX();
 					int candY = cand.getY();
 					if (f[candX][candY] == DST_UNKNOWN) {
@@ -113,9 +114,9 @@ public class SnakeAI implements Serializable {
 				possibleDirs.add(d);
 			}
 		}
-		if (!possibleDirs.isEmpty() && !possibleDirs.contains(dirBuffer.get())) {
-			dirBuffer.add((Point) possibleDirs.toArray()[rnd
-					.nextInt(possibleDirs.size())]);
+		if (!possibleDirs.isEmpty()
+				&& !possibleDirs.contains(dirBuffer.get())) {
+			dirBuffer.add((Point) possibleDirs.toArray()[rnd.nextInt(possibleDirs.size())]);
 		}
 	}
 
