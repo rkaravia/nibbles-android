@@ -10,6 +10,7 @@ nibbles-android is a clone of the popular 1990s game
 * Replication of the original 80x25 text screen esthetics
 * Sound effects
 * Can be controlled by hardware keys and touch input
+* AI adversaries
 
 ### Running/Building
 
